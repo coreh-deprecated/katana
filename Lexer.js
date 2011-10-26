@@ -7,6 +7,7 @@ var Lexer = module.exports = function() {
     this.lastTokenReturned = null
     this.currentLine = 0
     this.currentColumn = 0
+    this.storedToken = null
 }
 
 // This function is called by JISON upon initialization. 
@@ -25,18 +26,56 @@ Lexer.prototype.setInput = function(inputText) {
 // This function is called by JISON every time it needs a new token.
 // It should return a token name, and set the yytext and yylineno values.
 Lexer.prototype.lex = function() {
-    var result = this.doLex()
+    var result;
     
-    this.lastTokenReturned = result;
+    if (this.storedToken) {
+        result = this.storedToken
+        this.storedToken = null
+    } else {
+        result = this.doLex()
+    
+        this.lastTokenReturned = result;
+    
+        if (result == 'KEYWORD') {
+            switch (this.yytext) {
+                case 'if': result += '_IF'; break;
+                case 'int': result += '_INT'; break;
+                case 'float': result += '_FLOAT'; break;
+                case 'else': result += '_ELSE'; break;
+                default:
+                    throw new Error('Invalid keyword')
+            }
+        }
+
+        if (result == 'IDENTIFIER') {
+            // TODO: Implement logic to remove identifiers from this list
+            // when they're declared
+            switch (this.yytext) {
+                case 'if': result = 'KEYWORD_IF'; break;
+                case 'int': result = 'KEYWORD_INT'; break;
+                case 'float': result = 'KEYWORD_FLOAT'; break;
+                case 'else': result = 'KEYWORD_ELSE'; break;
+                default:
+                    // keep identifier
+            }
+        }
+    }
+    
+    if (this.tokenQueue.length > 0) {
+        var queuedToken = this.tokenQueue.shift()
+        if (queuedToken.replaceableBy == result) {
+            return result;
+        } else {
+            this.storedToken = result
+            return queuedToken.token
+        }
+    }
+    
     return result;
 }
 
 Lexer.prototype.doLex = function() {
     for (;;) {
-        
-        if (this.tokenQueue.length > 0) {
-            return this.tokenQueue.shift();
-        }
         
         this.yylineno = this.currentLine
         var ch = this.nextChar()
@@ -131,6 +170,7 @@ Lexer.prototype.doLex = function() {
                     case ';':
                     case ']':
                     case '}':
+                    case ')':
                         var currentIndentation = this.indentation[this.currentLine] || 0
                         if (currentIndentation > this.indentationStack[this.indentationStack.length-1]) {
                             this.indentationStack.push(currentIndentation)
@@ -144,11 +184,12 @@ Lexer.prototype.doLex = function() {
                             }
                             while (currentIndentation < this.indentationStack[this.indentationStack.length-1]) {
                                 this.indentationStack.pop()
-                                this.tokenQueue.push('DEDENT')
+                                this.tokenQueue.push({ token: 'DEDENT' })
                             }
                             if (this.indentationStack[this.indentationStack.length-1] != currentIndentation) {
                                 throw new Error('Indentation error')
                             } else {
+                                this.tokenQueue.push({ token: ';', replaceableBy: 'KEYWORD_ELSE' })
                                 break;
                             }
                         }
@@ -156,12 +197,6 @@ Lexer.prototype.doLex = function() {
                         break;
                 }
                 break;
-
-            case ch == '(':
-                return 'INDENT'
-                
-            case ch == ')':
-                return 'DEDENT'
             
             case ch == '+':
                 ch = this.peekNextChar()
@@ -350,6 +385,8 @@ Lexer.prototype.doLex = function() {
             case ch == ';':
             case ch == '{':
             case ch == '}':
+            case ch == '(':
+            case ch == ')':
                 return ch
 
             case !!ch.match(/[\w\_\$]/):

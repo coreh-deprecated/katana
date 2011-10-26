@@ -47,40 +47,77 @@ var _ = function() {
 var tokens = 
     'STRING_LITERAL INTEGER_LITERAL FLOAT_LITERAL INDENT DEDENT ' + 
     '++ += + -- -= -> - *= * /= / == = := : % %= ^= ^^= ^^ ^ &= ' +
-    '&&= && & |= ||= || | >> >= > << <= < != ! [ ] . , ; { } ' +
-    'IDENTIFIER KEYWORD'
+    '&&= && & |= ||= || | >> >= > << <= < != ! [ ] . , ; { } ( ) ' +
+    'IDENTIFIER KEYWORD_IF KEYWORD_FLOAT KEYWORD_INT KEYWORD_ELSE'
 
 var grammar = {
     
     program: [
-        ['code',                                         'return new yy.Program($1)']
+        ['code',                                        'return new yy.Program($1)'],
+        ['',                                            'return new yy.Program()']
     ],
     
     code: _(
         'expression',                                   function() { return new yy.Code($1) },
         'code ; expression',                            function() { $1.push($3); return $1 },
-        'code ;',
-        ''
+        'code ;'
     ),
     
     expression: _(
         'value',
-        'operation'
+        'operation',
+        'declaration',
+        'assignment'
     ),
     
     value: _(
         'literal',
-        'block'
+        'parental',
+        'block',
+        'statement',
+        'assignable'
+    ),
+    
+    assignable: _(
+        'IDENTIFIER',                                   function() { return new yy.Variable(yytext) }
+    ),
+    
+    statement: _(
+        'KEYWORD_IF expression block',                  function() { return new yy.If($2, $3) },
+        'KEYWORD_IF expression block KEYWORD_ELSE block',
+                                                        function() { return new yy.If($2, $3, $5) }
+    ),
+    
+    declaration: _(
+        'type declaration_list',                        function() { return new yy.Declaration($1, $2) }
+    ),
+    
+    type: _(
+        'KEYWORD_INT',
+        'KEYWORD_FLOAT'
+    ),
+    
+    declaration_list: _(
+        'declaration_list , IDENTIFIER',                function() { return $1.push($3) },
+        'IDENTIFIER',                                   function() { return [yytext] }
+    ),
+    
+    parental: _(
+        '( code )',                                     function() { return new yy.Parental($2) } 
     ),
     
     block: _(
-        'INDENT code DEDENT',                           function() { return new yy.Block($2) }   
+        'INDENT code DEDENT',                           function() { return new yy.Block($2) } 
     ),
     
     literal: _(
         'INTEGER_LITERAL',                              function() { return new yy.Literal(yytext, 'int') },
         'FLOAT_LITERAL',                                function() { return new yy.Literal(yytext, 'float') },
         'STRING_LITERAL',                               function() { return new yy.Literal(yytext, 'string') }
+    ),
+    
+    assignment: _(
+        'assignable = expression',                      function() { return new yy.Assignment($1, $3) }
     ),
         
     operation: _(
@@ -112,6 +149,8 @@ var grammar = {
 }
 
 var operators = [
+    ['right', 'KEYWORD_IF'],
+    ['right', '='],
     ['left', '|', '||', '&', '&&', '^', '^^'],
     ['left', '>', '>=', '==', '<', '<=', '!=', '<>'],
     ['left', '<<', '>>'],
@@ -129,7 +168,7 @@ var parser = new Parser({
 
 parser.lexer = new Lexer()
 
-parser.yy = require('./Nodes')
+parser.yy = require('./Generator')
 
 var fs = require('fs')
 var program = fs.readFileSync('test.k', 'utf-8')
