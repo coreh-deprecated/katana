@@ -1,3 +1,5 @@
-2 + 2
-3 + 3 * 5
-4
+float float, _float
+if 1
+	2
+else
+	1

@@ -48,15 +48,15 @@ Lexer.prototype.lex = function() {
         }
 
         if (result == 'IDENTIFIER') {
-            // TODO: Implement logic to remove identifiers from this list
-            // when they're declared
-            switch (this.yytext) {
-                case 'if': result = 'KEYWORD_IF'; break;
-                case 'int': result = 'KEYWORD_INT'; break;
-                case 'float': result = 'KEYWORD_FLOAT'; break;
-                case 'else': result = 'KEYWORD_ELSE'; break;
-                default:
-                    // keep identifier
+            if (!this.yy.scopes.current().get(this.yytext)) {
+                switch (this.yytext) {
+                    case 'if': result = 'KEYWORD_IF'; break;
+                    case 'int': result = 'KEYWORD_INT'; break;
+                    case 'float': result = 'KEYWORD_FLOAT'; break;
+                    case 'else': result = 'KEYWORD_ELSE'; break;
+                    default:
+                        // keep identifier
+                }
             }
         }
     }

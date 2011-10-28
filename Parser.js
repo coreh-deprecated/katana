@@ -1,5 +1,7 @@
 var Parser = require("jison").Parser
 var Lexer = require("./Lexer")
+var ScopeStack = require("./Scopes")
+
 
 // This helper code is somewhat based on the code from the CoffeScript parser
 var o = function(rule, action, options) {
@@ -53,12 +55,12 @@ var tokens =
 var grammar = {
     
     program: [
-        ['code',                                        'return new yy.Program($1)'],
-        ['',                                            'return new yy.Program()']
+        ['code',                                        'return new yy.nodes.Program(yy, $1)'],
+        ['',                                            'return new yy.nodes.Program(yy)']
     ],
     
     code: _(
-        'expression',                                   function() { return new yy.Code($1) },
+        'expression',                                   function() { return new yy.nodes.Code(yy, $1) },
         'code ; expression',                            function() { $1.push($3); return $1 },
         'code ;'
     ),
@@ -75,21 +77,38 @@ var grammar = {
         'parental',
         'block',
         'statement',
-        'assignable'
+        'assignable',
+        'function'
+    ),
+            
+    function_arrow: _(
+        '->',                                           function() { return 'var' },
+        '- type ->',                                    function() { return $2 },
+        '-/>',                                          function() { return 'void' }
+    ),
+    
+    'function_arguments': _(
+        'function_arguments, type declaration_name',
+        'type declaration_name'
+    ),
+        
+    'function': _(
+        'function_arrow block',
+        'PARAM_START function_arguments PARAM_END function_arrow block'
     ),
     
     assignable: _(
-        'IDENTIFIER',                                   function() { return new yy.Variable(yytext) }
+        'IDENTIFIER',                                   function() { return new yy.nodes.Variable(yy, yytext) }
     ),
     
     statement: _(
-        'KEYWORD_IF expression block',                  function() { return new yy.If($2, $3) },
+        'KEYWORD_IF expression block',                  function() { return new yy.nodes.If(yy, $2, $3) },
         'KEYWORD_IF expression block KEYWORD_ELSE block',
-                                                        function() { return new yy.If($2, $3, $5) }
+                                                        function() { return new yy.nodes.If(yy, $2, $3, $5) }
     ),
     
     declaration: _(
-        'type declaration_list',                        function() { return new yy.Declaration($1, $2) }
+        'type declaration_list',                        function() { return new yy.nodes.Declaration(yy, $1, $2) }
     ),
     
     type: _(
@@ -97,58 +116,65 @@ var grammar = {
         'KEYWORD_FLOAT'
     ),
     
+    declaration_name: _(
+        'IDENTIFIER',                                   function() { return yytext },
+        'KEYWORD_INT',                                  function() { return yytext },
+        'KEYWORD_FLOAT',                                function() { return yytext }
+    ),
+    
     declaration_list: _(
-        'declaration_list , IDENTIFIER',                function() { return $1.push($3) },
-        'IDENTIFIER',                                   function() { return [yytext] }
+        'declaration_list , declaration_name',          function() { $1.push($3); return $1 },
+        'declaration_name',                             function() { return [yytext] }
     ),
     
     parental: _(
-        '( code )',                                     function() { return new yy.Parental($2) } 
+        '( code )',                                     function() { return new yy.nodes.Parental(yy, $2) } 
     ),
     
     block: _(
-        'INDENT code DEDENT',                           function() { return new yy.Block($2) } 
+        'INDENT code DEDENT',                           function() { return new yy.nodes.Block(yy, $2) } 
     ),
     
     literal: _(
-        'INTEGER_LITERAL',                              function() { return new yy.Literal(yytext, 'int') },
-        'FLOAT_LITERAL',                                function() { return new yy.Literal(yytext, 'float') },
-        'STRING_LITERAL',                               function() { return new yy.Literal(yytext, 'string') }
+        'INTEGER_LITERAL',                              function() { return new yy.nodes.Literal(yy, yytext, 'int') },
+        'FLOAT_LITERAL',                                function() { return new yy.nodes.Literal(yy, yytext, 'float') },
+        'STRING_LITERAL',                               function() { return new yy.nodes.Literal(yy, yytext, 'string') }
     ),
     
     assignment: _(
-        'assignable = expression',                      function() { return new yy.Assignment($1, $3) }
+        'assignable = expression',                        function() { return new yy.nodes.Assignment(yy, $1, $3) }
     ),
         
     operation: _(
-        'expression +  expression',                     function(){ return new yy.Operation('+', $1, $3) },
-        'expression -  expression',                     function(){ return new yy.Operation('-', $1, $3) },
+        'expression +  expression',                     function(){ return new yy.nodes.Operation(yy, '+', $1, $3) },
+        'expression -  expression',                     function(){ return new yy.nodes.Operation(yy, '-', $1, $3) },
         
-        'expression *  expression',                     function(){ return new yy.Operation('*', $1, $3) },
-        'expression /  expression',                     function(){ return new yy.Operation('/', $1, $3) },
+        'expression *  expression',                     function(){ return new yy.nodes.Operation(yy, '*', $1, $3) },
+        'expression /  expression',                     function(){ return new yy.nodes.Operation(yy, '/', $1, $3) },
         
-        'expression >> expression',                     function(){ return new yy.Operation('>>', $1, $3) },
-        'expression << expression',                     function(){ return new yy.Operation('<<', $1, $3) },
+        'expression >> expression',                     function(){ return new yy.nodes.Operation(yy, '>>', $1, $3) },
+        'expression << expression',                     function(){ return new yy.nodes.Operation(yy, '<<', $1, $3) },
         
-        'expression >  expression',                     function(){ return new yy.Operation('>', $1, $3) },
-        'expression >= expression',                     function(){ return new yy.Operation('>=', $1, $3) },
-        'expression <  expression',                     function(){ return new yy.Operation('<', $1, $3) },
-        'expression <= expression',                     function(){ return new yy.Operation('<=', $1, $3) },
-        'expression == expression',                     function(){ return new yy.Operation('==', $1, $3) },
-        'expression != expression',                     function(){ return new yy.Operation('!=', $1, $3) },
-        'expression <> expression',                     function(){ return new yy.Operation('<>', $1, $3) },
+        'expression >  expression',                     function(){ return new yy.nodes.Operation(yy, '>', $1, $3) },
+        'expression >= expression',                     function(){ return new yy.nodes.Operation(yy, '>=', $1, $3) },
+        'expression <  expression',                     function(){ return new yy.nodes.Operation(yy, '<', $1, $3) },
+        'expression <= expression',                     function(){ return new yy.nodes.Operation(yy, '<=', $1, $3) },
+        'expression == expression',                     function(){ return new yy.nodes.Operation(yy, '==', $1, $3) },
+        'expression != expression',                     function(){ return new yy.nodes.Operation(yy, '!=', $1, $3) },
+        'expression <> expression',                     function(){ return new yy.nodes.Operation(yy, '<>', $1, $3) },
         
-        'expression &  expression',                     function(){ return new yy.Operation('&', $1, $3) },
-        'expression && expression',                     function(){ return new yy.Operation('&&', $1, $3) },
-        'expression |  expression',                     function(){ return new yy.Operation('|', $1, $3) },
-        'expression || expression',                     function(){ return new yy.Operation('||', $1, $3) },
-        'expression ^  expression',                     function(){ return new yy.Operation('^', $1, $3) },
-        'expression ^^ expression',                     function(){ return new yy.Operation('^^', $1, $3) }
+        'expression &  expression',                     function(){ return new yy.nodes.Operation(yy, '&', $1, $3) },
+        'expression && expression',                     function(){ return new yy.nodes.Operation(yy, '&&', $1, $3) },
+        'expression |  expression',                     function(){ return new yy.nodes.Operation(yy, '|', $1, $3) },
+        'expression || expression',                     function(){ return new yy.nodes.Operation(yy, '||', $1, $3) },
+        'expression ^  expression',                     function(){ return new yy.nodes.Operation(yy, '^', $1, $3) },
+        'expression ^^ expression',                     function(){ return new yy.nodes.Operation(yy, '^^', $1, $3) }
         
     )
 }
 
 var operators = [
+    ['right', '->'],
     ['right', 'KEYWORD_IF'],
     ['right', '='],
     ['left', '|', '||', '&', '&&', '^', '^^'],
@@ -168,7 +194,9 @@ var parser = new Parser({
 
 parser.lexer = new Lexer()
 
-parser.yy = require('./Generator')
+parser.yy = {}
+parser.yy.nodes = require('./Generator')
+parser.yy.scopes = new ScopeStack()
 
 var fs = require('fs')
 var program = fs.readFileSync('test.k', 'utf-8')

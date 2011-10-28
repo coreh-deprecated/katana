@@ -1,6 +1,54 @@
 var uniqueCount = 0
-var uniqueName = function(what) {
-    return '_' + what + (uniqueCount++)
+var uniqueName = function(scope, what) {
+    var name
+    do {
+        name = '_' + what + (uniqueCount++)
+    } while (scope.get(name))
+    return name
+}
+
+var cKeywords = [
+    'auto',
+    'double',
+    'int',
+    'struct',
+    'break',
+    'else',
+    'long',
+    'switch',
+    'case',
+    'enum',
+    'register',
+    'typedef',
+    'char',
+    'extern',
+    'return',
+    'union',
+    'const',
+    'float',
+    'short',
+    'unsigned',
+    'continue',
+    'for',
+    'signed',
+    'void',
+    'default',
+    'goto',
+    'sizeof',
+    'volatile',
+    'do',
+    'if',
+    'static',
+    'while'
+]
+
+var adaptIdentifier = function(scope, identifier) {
+    if (cKeywords.indexOf(identifier) != -1) {
+        do {
+            identifier = '_' + identifier;
+        } while (scope.get(identifier))
+    }
+    return identifier
 }
 
 exports = module.exports = require('./Nodes')
@@ -10,7 +58,11 @@ exports.Program.prototype.generate = function() {
     var code = 'int main(int argc, char**argv) {';
 
     if (this.code) {
-        var tmp = this.code.generate()
+        if (this.code.type == 'int') {
+            var tmp = this.code.generate()
+        } else {
+            var tmp = this.code.generate({ suppressName: true })
+        }
     
         var declarationsByType = {}
     
@@ -31,6 +83,9 @@ exports.Program.prototype.generate = function() {
         if (tmp.type == 'int') {
             code += 'return ' + (tmp.inline || tmp.name) + ';'
         } else {
+            if (tmp.inline) {
+                code += tmp.inline + ';'
+            }
             code += 'return 0;'
         }
     } else {
@@ -88,7 +143,7 @@ exports.Operation.prototype.generate = function() {
 exports.Declaration.prototype.generate = function() {
     var declare = {}
     for (var i = 0; i < this.identifiers.length; i++) {
-        var identifier = this.identifiers[i]
+        var identifier = adaptIdentifier(this.scope, this.identifiers[i])
         declare[identifier] = { type: this.type }
     }
     return {
@@ -138,7 +193,7 @@ exports.Code.prototype.generate = function (options) {
 
     for (var i = 0; i < this.expressions.length; i++) {
         if (i == this.expressions.length - 1) {
-            var tmp = this.expressions[i].generate({ forceName: options.forceName })
+            var tmp = this.expressions[i].generate({ forceName: options.forceName, suppressName: options.suppressName })
         } else {
             var tmp = this.expressions[i].generate()
         }
@@ -149,7 +204,6 @@ exports.Code.prototype.generate = function (options) {
         
         if (i == this.expressions.length - 1) {
             type = tmp.type
-            inline = tmp.inline || tmp.name
             block += tmp.block
             
             if (tmp.name) {
@@ -195,7 +249,7 @@ exports.Block.prototype.generate = function(options) {
             if (options.forceName) {
                 name = options.forceName
             } else {
-                name = uniqueName('v')
+                name = uniqueName(this.scope, 'v')
             }
             block += name + '=' + tmp.inline + ';'
             declare[name] = { type: tmp.type }
@@ -214,14 +268,14 @@ exports.Block.prototype.generate = function(options) {
 exports.If.prototype.generate = function(options) {
     options = options || {}
     
-    var childrenShouldSupressName = false
+    var childrenShouldSupressName = options.suppressName
     var childrenForceName = options.forceName || ''
     
     if (this.type == 'void') {
         childrenShouldSupressName = true;
     } else {
         if (!childrenForceName) {
-            childrenForceName = uniqueName('v')
+            childrenForceName = uniqueName(this.scope, 'v')
         }
     }
     
@@ -273,7 +327,7 @@ exports.Variable.prototype.generate = function() {
     return {
         block: '',
         inline: '',
-        name: this.name,
+        name: adaptIdentifier(this.scope, this.name),
         type: this.type,
         declare: {}   
     }
