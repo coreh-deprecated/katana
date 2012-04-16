@@ -1,46 +1,29 @@
 var misc = require('./misc')
-var lexer = require('./lexer')
 
-var removeWhitespace = function(lines) {
-  lines.forEach(function(line) {
-    line.tokens = line.tokens.filter(function(token) {
-      return token.type != 'whitespace'
-    })
-  })
-  return lines
+var removeCommentsAndWhitespace = function(tokens) {
+  var result = []
+  for (var i = 0; i < tokens.length; i++) {
+    if (!tokens[i].is(['comment', 'whitespace'])) {
+      result.push(tokens[i])
+    }
+  }
+  return result
 }
 
-var removeComments = function(lines) {
-  lines.forEach(function(line) {
-    line.tokens = line.tokens.filter(function(token) {
-      return token.type != 'comment'
-    })
-  })
-  return lines
+var removeDuplicatedNewLines = function(tokens) {
+  var result = []
+  var lastType = null
+  for (var i = 0; i < tokens.length; i++) {
+    if (tokens[i].is('newline') && lastType == 'newline') {
+      // omit token
+    } else {
+      result.push(tokens[i])
+    } 
+    lastType = tokens[i].type
+  }
+  return result
 }
 
-var removeEmptyLines = function(lines) {
-  return lines.filter(function(line) {
-    return line.tokens.length != 0
-  })
-}
+var rewriter = misc.pipeline(removeCommentsAndWhitespace, removeDuplicatedNewLines)
 
-var splitLinesOnSemiColons = function(lines) {
-  return misc.unfold(lines, function(line) {
-    var tokensArrayArray = misc.split(line.tokens, function(token) {
-      return token.type == 'semicolon'
-    })
-    return tokensArrayArray.map(function(tokensArray) {
-      return new lexer.Line(line.value, line.number, tokensArray, line.indentation)
-    })
-  })
-}
-
-/**
- * Rewriter - Performs transformations in the stream provided by the
- *            lexer to ease parsing.
- */
-exports = module.exports = misc.pipeline(removeWhitespace,
-                                         removeComments,
-                                         splitLinesOnSemiColons,
-                                         removeEmptyLines)
+exports = module.exports = rewriter
