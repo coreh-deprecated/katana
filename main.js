@@ -61,7 +61,15 @@ try {
   }
   tree(result.program)
 } catch (err) {
-  if (err.name !== 'ParseError') { 
-    throw err
-  }
+  cursor.beep()
+  cursor.red()
+  process.stderr.write('INTERNAL ERROR.')
+  cursor.reset()
+  process.stderr.write('\n\nThe compiler encountered an internal logic error.\nThis is not a problem with your code, but within the compiler itself.\n\nPlease report this entire error log at ')
+  cursor.blue()
+  cursor.underline()
+  process.stderr.write('https://github.com/coreh/katana')
+  cursor.reset()
+  process.stderr.write(',\nif possible along with the input that uncovered the error.\n\nSorry for the inconvenience.\n\n')
+  console.error(err.stack)
 }

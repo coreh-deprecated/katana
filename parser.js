@@ -128,9 +128,14 @@ Parser.prototype = {
   }
 }
 , Program: function() {
-  var statementList = this.StatementList()
-  if (!this.eat('end of file')) {
-    this.error('Expected end of file.')
+  var statementList 
+  try {
+    statementList = this.StatementList()
+    if (!this.eat('end of file')) {
+      this.error('Expected end of file.')
+    }
+  } catch (err) { 
+    if (err.name !== 'ParseError') { throw err }
   }
   return statementList
 }
