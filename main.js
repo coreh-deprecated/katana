@@ -9,6 +9,8 @@ var compiler = misc.pipeline(lexer, rewriter, parser)
 var filename = 'test.k'
 code = fs.readFileSync(filename, 'utf-8')
 
+var cursor = ansi(process.stderr)
+
 var tree = function(code, level) {
   if (typeof level === 'undefined') {
     level = 0
@@ -27,16 +29,8 @@ var tree = function(code, level) {
   })
 }
 
-try {
-  var result = compiler(code)
-  tree(result)
-} catch (err) {
-  if (err.name !== 'ParseError') { 
-    throw err
-  }
-  var cursor = ansi(process.stderr)
+var reportError = function(err) {
   var lines = code.split('\n')
-  cursor.beep()
   process.stderr.write(filename + ' (')
   cursor.blue()
   process.stderr.write('line ' + err.line)
@@ -56,5 +50,18 @@ try {
   var l = Math.max(1, err.endColumn - err.startColumn)
   console.error(Array(err.startColumn).join(' ') + Array(l+1).join('^'))
   cursor.reset()
-  console.error()
+  console.error() 
+}
+
+try {
+  var result = compiler(code)
+  result.errors.forEach(reportError)
+  if (result.errors.length > 0) {
+    cursor.beep()
+  }
+  tree(result.program)
+} catch (err) {
+  if (err.name !== 'ParseError') { 
+    throw err
+  }
 }

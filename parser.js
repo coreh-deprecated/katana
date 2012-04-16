@@ -42,6 +42,7 @@ var Parser = function(tokens) {
   this.scopeStack = [{}]
   this.tokens = tokens
   this.position = 0
+  this.errors = []
 }
 
 Parser.prototype = {
@@ -51,8 +52,10 @@ Parser.prototype = {
 , error: function(msg) {
     var next = this.next()
     var nextNext = this.next(+1) || { column: next.column }
-    throw new ParseError(msg, next.line, next.column, nextNext.column)
-  }  
+    var error = new ParseError(msg, next.line, next.column, nextNext.column)
+    this.errors.push(error)
+    throw error
+  }
 , next: function(offset) {
     if (typeof offset === 'undefined') {
       offset = 0
@@ -94,7 +97,7 @@ Parser.prototype = {
     }
     if (skip) {
       originalPosition = this.position
-      while ((next = this.next()).is(skip)) {
+      while (next = this.next(), next.is(skip) && !next.is(type, value) && !next.is('end of file')) {
         this.position++
       }
     } else {
@@ -145,7 +148,12 @@ Parser.prototype = {
     var statements = []
     while (!(this.expect('curly bracket', '}') || 
             this.expect('end of file'))) {
-      statements.push(this.Statement())
+      try {
+        statements.push(this.Statement())
+      } catch (err) { 
+        if (err.name !== 'ParseError') { throw err }
+        this.eat('newline', undefined, '*') // skip until newline
+      }
     }
     return new Symbol('statement list', null, statements)
   }
@@ -304,7 +312,7 @@ Parser.prototype = {
       } else if (this.expect('curly bracket', '{')) {
         value = this.ObjectLiteral()
       }else {
-        this.error('Expected literal or identifier inside expression')
+        this.error('Expected a value')
       }
     }
     return value
@@ -316,11 +324,27 @@ Parser.prototype = {
     } else {
       var contents = []
       for (;;) {
-        contents.push(this.AssignmentExpression())
-        if (this.eat('square bracket', ']')) {
-          return new Symbol('array literal', null, contents)
-        } else {
-          this.automaticComma()
+        try {
+          contents.push(this.AssignmentExpression())
+          if (this.eat('square bracket', ']')) {
+            return new Symbol('array literal', null, contents)
+          } else {
+            this.automaticComma()
+          }
+        } catch (err) {
+          if (err.name !== 'ParseError') { throw err }
+          var eaten = this.eat(['newline', 'comma', 'square bracket'], undefined, '*') // skip until newline or comma
+          if (eaten && eaten.type === 'square bracket') {
+            if (eaten.value == ']') {
+              return new Symbol('array literal', null, contents)
+            } else {
+              this.eat(['newline', 'comma'])
+            }
+          } else {
+            if (this.expect('end of file')) {
+              return new Symbol('array literal', null, contents)
+            }
+          }
         }
       }
     }
@@ -333,19 +357,35 @@ Parser.prototype = {
       var contents = []
       var key, value
       for (;;) {
-        if (!(key = this.eat(['identifier', 'number literal', 'string literal']))) {
-          this.error('Expected key inside object literal.')
-        } 
-        if (this.eat('colon')) {
-          value = this.AssignmentExpression()
-        } else {
-          value = key
-        }
-        contents.push(key, value)
-        if (this.eat('curly bracket', '}')) {
-          return new Symbol('object literal', null, contents)
-        } else {
-          this.automaticComma()
+        try {
+          if (!(key = this.eat(['identifier', 'number literal', 'string literal']))) {
+            this.error('Expected key inside object literal.')
+          } 
+          if (this.eat('colon')) {
+            value = this.AssignmentExpression()
+          } else {
+            value = key
+          }
+          contents.push(key, value)
+          if (this.eat('curly bracket', '}')) {
+            return new Symbol('object literal', null, contents)
+          } else {
+            this.automaticComma()
+          }
+        } catch (err) {
+          if (err.name !== 'ParseError') { throw err }
+          var eaten = this.eat(['newline', 'comma', 'curly bracket'], undefined, '*') // skip until newline or comma
+          if (eaten && eaten.type === 'curly bracket') {
+            if (eaten.value == '}') {
+              return new Symbol('object literal', null, contents)
+            } else {
+              this.eat(['newline', 'comma'])
+            }
+          } else {
+            if (this.expect('end of file')) {
+              return new Symbol('object literal', null, contents)
+            }
+          }
         }
       }
     }
@@ -354,7 +394,7 @@ Parser.prototype = {
 
 var parser = function(tokens) {
   var parser = new Parser(tokens)
-  return parser.Program()
+  return { program: parser.Program(), errors: parser.errors }
 }
 
 exports = module.exports = parser

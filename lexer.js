@@ -21,7 +21,7 @@ var tokens = {
 , 'keyword': new RegExp('^\\\\('+keywords.join('|')+')')
 , 'string literal': /^\"((\\.|[^\"])*)\"|^\'((\\.|[^\'])*)\'/
 , 'number literal': /^(0|[1-9][0-9]*)(\.[0-9]+)?((e|E)(\+|\-)[0-9]+)?/
-, 'assignment operator': /^(\+|\-|\*|\/|\%|\&|\&\&|\||\|\|\>\>|\<\<|\^|\^\^|\:)(\=)/
+, 'assignment operator': /^(\+|\-|\*|\/|\%|\&|\&\&|\||\|\|\>\>|\<\<|\^|\^\^|\:|)(\=)/
 , 'logical or operator': /^\|\|/
 , 'logical xor operator': /^\^\^/
 , 'logical and operator': /^\&\&/
