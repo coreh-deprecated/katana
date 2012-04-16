@@ -4,6 +4,7 @@
 var lexer = require('./lexer')
 var Symbol = lexer.Symbol
 var keywords = lexer.keywords
+var KatanaError = require('./misc').KatanaError
 
 var rightAssociativeOperator = function(subExpressionName, optype, type) {
   var Expression = function() {
@@ -27,22 +28,11 @@ var leftAssociativeOperator = function(subExpressionName, optype, type) {
   }
 }
 
-var ParseError = function(message, line, startColumn, endColumn) {
-  this.name = "ParseError"
-  this.message = message
-  this.line = line
-  this.startColumn = startColumn
-  this.endColumn = endColumn
-}
-
-ParseError.prototype = new Error()
-ParseError.prototype.constructor = ParseError
-
-var Parser = function(tokens) {
+var Parser = function(rewriterOutput) {
   this.scopeStack = [{}]
-  this.tokens = tokens
+  this.tokens = rewriterOutput.tokens
   this.position = 0
-  this.errors = []
+  this.errors = rewriterOutput.errors
 }
 
 Parser.prototype = {
@@ -51,18 +41,20 @@ Parser.prototype = {
   }
 , error: function(msg) {
     var next = this.next()
-    var nextNext = this.next(+1) || { column: next.column }
-    var error = new ParseError(msg, next.line, next.column, nextNext.column)
+    var error = new KatanaError('syntax', 'error', msg, next.line, next.column, next.column + next.value.length)
     this.errors.push(error)
     throw error
   }
-, next: function(offset) {
+, next: function(offset, autoKeywords) {
     if (typeof offset === 'undefined') {
       offset = 0
     }
+    if (typeof autoKeywords === 'undefined') {
+      autoKeywords = true
+    }
     var token = this.tokens[this.position + offset]
     // Automatically convert identifiers to keywords
-    if ((typeof token !== 'undefined') && token.type === 'identifier') {
+    if (autoKeywords && (typeof token !== 'undefined') && token.type === 'identifier') {
       if (keywords.indexOf(token.value) != -1 && typeof (this.scope()[token.value]) === 'undefined') {
         token.type = 'keyword'
         token.value = '\\' + token.value
@@ -70,19 +62,19 @@ Parser.prototype = {
     }
     return token
   }
-, expect: function(type, value, skip) {
+, expect: function(type, value, skip, autoKeywords) {
     var next, originalPosition
     if (typeof skip === 'undefined') {
       skip = 'newline'
     }
     if (skip) {
       originalPosition = this.position
-      while ((next = this.next()).is(skip)) {
+      while ((next = this.next(undefined, autoKeywords)).is(skip)) {
         this.position++
       }
       this.position = originalPosition
     } else {
-      next = this.next()
+      next = this.next(undefined, autoKeywords)
     }
     if (next.is(type, value)) {
       return next
@@ -90,18 +82,18 @@ Parser.prototype = {
       return null
     }
   }
-, eat: function(type, value, skip) {
+, eat: function(type, value, skip, autoKeywords) {
     var next, originalPosition
     if (typeof skip === 'undefined') {
       skip = 'newline'
     }
     if (skip) {
       originalPosition = this.position
-      while (next = this.next(), next.is(skip) && !next.is(type, value) && !next.is('end of file')) {
+      while (next = this.next(undefined, autoKeywords), next.is(skip) && !next.is(type, value) && !next.is('end of file')) {
         this.position++
       }
     } else {
-      next = this.next()
+      next = this.next(undefined, autoKeywords)
     }
     if (next.is(type, value)) {
       this.position++
@@ -116,7 +108,9 @@ Parser.prototype = {
 , automaticSemicolon: function() {
   if (!this.eat('semicolon')) {
     if (!this.eat('newline', undefined, false)) {
-      this.error('Expected `;`.')
+      if (!this.expect('curly bracket', '}')) {
+        this.error('Expected `;`.')
+      }
     }
   }
 }
@@ -131,21 +125,18 @@ Parser.prototype = {
   var statementList 
   try {
     statementList = this.StatementList()
-    if (!this.eat('end of file')) {
-      this.error('Expected end of file.')
-    }
   } catch (err) { 
-    if (err.name !== 'ParseError') { throw err }
+    if (err.name !== 'KatanaError') { throw err }
   }
   return statementList
 }
 , Block: function() {
     if (!this.eat('curly bracket', '{')) {
-      this.error('Expected `{` at beginning of block.')
+      this.error('Expected block of code.')
     }
     var statementList = this.StatementList()
     if (!this.eat('curly bracket', '}')) {
-      this.error('Expected `}` at end of block.')
+      this.error('Expected end of block.')
     }
     return statementList
   }
@@ -156,7 +147,7 @@ Parser.prototype = {
       try {
         statements.push(this.Statement())
       } catch (err) { 
-        if (err.name !== 'ParseError') { throw err }
+        if (err.name !== 'KatanaError') { throw err }
         this.eat('newline', undefined, '*') // skip until newline
       }
     }
@@ -316,7 +307,9 @@ Parser.prototype = {
         value = this.ArrayLiteral()
       } else if (this.expect('curly bracket', '{')) {
         value = this.ObjectLiteral()
-      }else {
+      } else if (this.expect('keyword', /(\\take|\\do)/)) {
+        value = this.FunctionLiteral()
+      } else {
         this.error('Expected a value')
       }
     }
@@ -337,7 +330,7 @@ Parser.prototype = {
             this.automaticComma()
           }
         } catch (err) {
-          if (err.name !== 'ParseError') { throw err }
+          if (err.name !== 'KatanaError') { throw err }
           var eaten = this.eat(['newline', 'comma', 'square bracket'], undefined, '*') // skip until newline or comma
           if (eaten && eaten.type === 'square bracket') {
             if (eaten.value == ']') {
@@ -355,6 +348,10 @@ Parser.prototype = {
     }
   }
 , ObjectLiteral: function() {
+    var openingBracket = this.expect('curly bracket', '{')
+    if (openingBracket.meta.generatedByOffside) {
+      this.error('Expected value.')
+    }
     this.eat('curly bracket', '{')
     if (this.eat('curly bracket', '}')) {
       return new Symbol('object literal', null, [])
@@ -378,7 +375,7 @@ Parser.prototype = {
             this.automaticComma()
           }
         } catch (err) {
-          if (err.name !== 'ParseError') { throw err }
+          if (err.name !== 'KatanaError') { throw err }
           var eaten = this.eat(['newline', 'comma', 'curly bracket'], undefined, '*') // skip until newline or comma
           if (eaten && eaten.type === 'curly bracket') {
             if (eaten.value == '}') {
@@ -395,10 +392,17 @@ Parser.prototype = {
       }
     }
   }
+, FunctionLiteral: function() {
+    if (this.eat('keyword', '\\take')) {
+      return new Symbol('function literal', null, [this.Expression(), this.Block()])
+    } else if (this.eat('keyword', '\\do')) {
+      return new Symbol('function literal', null, [this.Block()])
+    }
+  }
 }
 
-var parser = function(tokens) {
-  var parser = new Parser(tokens)
+var parser = function(rewriterOutput) {
+  var parser = new Parser(rewriterOutput)
   return { program: parser.Program(), errors: parser.errors }
 }
 

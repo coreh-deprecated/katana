@@ -41,7 +41,7 @@ var reportError = function(err) {
   cursor.reset()
   process.stderr.write(') ')
   cursor.red()
-  process.stderr.write('syntax error: ')
+  process.stderr.write(err.type + ' ' + err.severity + ': ')
   cursor.reset()
   console.error(err.message)
   cursor.grey()

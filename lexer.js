@@ -14,7 +14,7 @@ var keywords = ['if', 'else', 'while', 'for'
  * Token definitions
  */
 var tokens = {
-  'whitespace': /^[^\S\n]/
+  'whitespace': /^[^\S\n]+/
 , 'newline': /^(\r|\n|\r\n)/
 , 'comment': /^(\/\/.*|\/\*[\s\S]*?\*\/)/
 , 'identifier': /^[\_\$a-zA-Z][\_\$a-zA-Z0-9]*/
@@ -41,6 +41,7 @@ var tokens = {
 , 'comma': /^\,/
 , 'square bracket': /^(\[|\])/
 , 'curly bracket': /^(\{|\})/
+, 'offside operator': /^\-\>/
 , 'paren': /^(\(|\))/
 , 'colon': /^\:/
 , 'semicolon': /^\;/
@@ -55,11 +56,15 @@ var tokens = {
  * @param {Number} line      The symbol's line (optional)
  * @param {Number} column    The symbol's column (optional)
  */
-var Symbol = function(type, value, children, line, column) {
+var Symbol = function(type, value, children, line, column, meta) {
+  if (typeof meta == 'undefined') {
+    meta = {}
+  }
   this.type = type
   this.value = value
   this.line = line
   this.column = column
+  this.meta = meta
   if (typeof children === 'undefined') {
     this.children = []
   } else {
@@ -147,7 +152,7 @@ var lexer = function (code) {
   
   result.push(new Symbol('end of file', '', [], line, column))
   
-  return result
+  return { tokens: result, errors: [] }
 }
 
 
