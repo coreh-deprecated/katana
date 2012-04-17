@@ -2,12 +2,14 @@ var misc = require('./misc')
 var Symbol = require('./lexer').Symbol
 var KatanaError = require('./misc').KatanaError
 
-var write = function(tokens) {
+var write = function(previous) {
+  var tokens = previous.tokens
   var result = ''
   for (var i = 0; i < tokens.length; i++) {
     result += tokens[i].value
   }
   console.log(result)
+  return previous
 }
 
 var transformOffsideOperator = function(previous) {
@@ -17,23 +19,25 @@ var transformOffsideOperator = function(previous) {
   var i = 0
   var result = []
   var indent = 0
-  var transformOffsideOperatorUnknown = function() {
+  var handleOffside = function() {
+    var extraTokens
     result.push(new Symbol('curly bracket', '{', [], tokens[i].line, tokens[i].column, { generatedByOffside: true }))
     i++
     for (; i < tokens.length; i++) {
       if (tokens[i].is('whitespace')) {
         // ignore
       } else if (tokens[i].is('newline')) {
-        transformOffsideOperatorMultiline(indent)
+        extraTokens = handleMultilineOffside(indent)
         break;
       } else {
-        transformOffsideOperatorInline()
+        extraTokens = handleInlineOffside()
         break;
       }
     }
     result.push(new Symbol('curly bracket', '}', [], tokens[i].line, tokens[i].column, { generatedByOffside: true }))
+    if (extraTokens) { Array.prototype.push.apply(result, extraTokens) }
   }
-  var transformOffsideOperatorInline = function() {
+  var handleInlineOffside = function() {
     var startLine = tokens[i].line
     var startColumn = tokens[i].column
     var brackets = []
@@ -45,7 +49,7 @@ var transformOffsideOperator = function(previous) {
         i--
         return
       } else if (tokens[i].is('offside operator')) {
-        transformOffsideOperatorUnknown()
+        handleOffside()
       } else {
         if (tokens[i].is(['square bracket', 'curly bracket', 'paren'])) {
           if (tokens[i].value.match(/\[|\{|\(/)) {
@@ -66,17 +70,18 @@ var transformOffsideOperator = function(previous) {
       }
     }    
   }
-  var transformOffsideOperatorMultiline = function(closingIndent) {
+  var handleMultilineOffside = function(closingIndent) {
+    var extraTokens = []
     var startLine = tokens[i].line
     var startColumn = tokens[i].column
     var brackets = []
     for (; i < tokens.length; i++) {
       // Detect indents
       if (tokens[i].is('newline')) {
-        result.push(tokens[i])
+        extraTokens.push(tokens[i])
         if (tokens[i+1].is('whitespace')) {
           i++
-          result.push(tokens[i])
+          extraTokens.push(tokens[i])
           indent = tokens[i].value.length
         } else {
           indent = 0
@@ -91,10 +96,13 @@ var transformOffsideOperator = function(previous) {
             }
           }
           while(!tokens[i--].is('newline')) { }
-          return
+          return extraTokens.slice(1)
+        } else {
+          Array.prototype.push.apply(result, extraTokens)
+          extraTokens = []
         }
         if (tokens[i].is('offside operator')) {
-          transformOffsideOperatorUnknown()
+          handleOffside()
         } else {
           if (tokens[i].is(['square bracket', 'curly bracket', 'paren'])) {
             if (tokens[i].value.match(/\[|\{|\(/)) {
@@ -116,7 +124,7 @@ var transformOffsideOperator = function(previous) {
       }
     }
   }
-  transformOffsideOperatorMultiline(-1)
+  handleMultilineOffside(-1)
   return { tokens: result, errors: errors }
 }
 
@@ -132,22 +140,31 @@ var removeCommentsAndWhitespace = function(previous) {
   return { tokens: result, errors: errors }
 }
 
-var removeDuplicatedNewLines = function(previous) {
+var replaceRepeatedNewlinesWithSemicolons = function(previous) {
   var tokens = previous.tokens
   var errors = previous.errors
   var result = []
-  var lastType = null
+  var newLineCount = 0
   for (var i = 0; i < tokens.length; i++) {
-    if (tokens[i].is('newline') && lastType == 'newline') {
-      // omit token
+    if (tokens[i].is('newline')) {
+      newLineCount++
+      if (newLineCount == 1) {
+        result.push(tokens[i])
+      } else if (newLineCount == 2) {
+        result.push(new Symbol('semicolon', ';'))
+      } else {
+        // omit symbol
+      }
     } else {
+      newLineCount = 0
       result.push(tokens[i])
-    } 
-    lastType = tokens[i].type
+    }
   }
   return { tokens: result, errors: errors }
 }
 
-var rewriter = misc.pipeline(transformOffsideOperator, removeCommentsAndWhitespace, removeDuplicatedNewLines)
+var rewriter = misc.pipeline(transformOffsideOperator,
+                             removeCommentsAndWhitespace,
+                             replaceRepeatedNewlinesWithSemicolons)
 
 exports = module.exports = rewriter
