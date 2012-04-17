@@ -1,12 +1,16 @@
 var ansi = require('ansi')
 var util = require('util')
 var fs = require('fs')
+
 var misc = require('./misc')
 var lexer = require('./lexer')
 var rewriter = require('./rewriter')
 var parser = require('./parser')
+
 var compiler = misc.pipeline(lexer, rewriter, parser)
+
 var filename = 'test.k'
+
 code = fs.readFileSync(filename, 'utf-8')
 
 var cursor = ansi(process.stderr)
@@ -55,11 +59,12 @@ var reportError = function(err) {
 
 try {
   var result = compiler(code)
-  result.errors.forEach(reportError)
   if (result.errors.length > 0) {
     cursor.beep()
+    result.errors.forEach(reportError)
+  } else {
+    tree(result.program)
   }
-  tree(result.program)
 } catch (err) {
   cursor.beep()
   cursor.red()
