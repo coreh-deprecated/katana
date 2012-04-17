@@ -164,7 +164,13 @@ Parser.prototype = {
         return this.WhileStatement()
       } else if (keyword.value == '\\for') {
         return this.ForStatement()
-      }
+      } else if (keyword.value == '\\return') {
+        return this.ReturnStatement()
+      } else if (keyword.value == '\\break') {
+        return this.BreakStatement()
+      } else if (keyword.value == '\\continue') {
+        return this.ContinueStatement()
+      } 
     }
     var expression = this.Expression()
     this.automaticSemicolon()
@@ -202,6 +208,27 @@ Parser.prototype = {
     var block = this.Block()
     this.automaticSemicolon()
     return new Symbol('for statement', null, [condition, block])
+  }
+, ReturnStatement: function() {
+    this.eat('keyword', '\\return')
+    if (this.expect('semicolon') || this.expect('curly bracket', '}') || this.expect('end of file')) {
+      this.automaticSemicolon()
+      return new Symbol('return statement', null)
+    } else {
+      var value = this.Expression()
+      this.automaticSemicolon()
+      return new Symbol('return statement', null, [value])
+    }
+  }
+, BreakStatement: function() {
+    this.eat('keyword', '\\break')
+    this.automaticSemicolon()
+    return new Symbol('break statement', null)
+  }
+, ContinueStatement: function() {
+    this.eat('keyword', '\\continue')
+    this.automaticSemicolon()
+    return new Symbol('continue statement', null)
   }
 , Expression: function() {
     var assignmentExps = [this.AssignmentExpression()]
@@ -393,6 +420,7 @@ Parser.prototype = {
             }
           }
         }
+        
       }
     }
   }

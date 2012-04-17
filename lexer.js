@@ -1,16 +1,16 @@
 var KatanaError = require('./misc').KatanaError
 
-var keywords = ['if', 'else', 'while', 'for'
-               ,'take', 'do', 'return'
-               ,'true', 'false', 'yes', 'no', 'on', 'off'
-               ,'null'
-               ,'undefined'
-               ,'var' 
-               ,'void'
-               ,'int', 'int8', 'int16', 'int32', 'int64'
-               ,'uint', 'uint8', 'uint16', 'uint32', 'uint64'
-               ,'float', 'float32', 'float64'
-               ,'struct']
+var controlKeywords = ['if', 'else', 'while', 'for', 'break', 'continue']
+var functionKeywords = [ 'take', 'do', 'return' ]
+var constantKeywords = [ 'true', 'false', 'yes', 'no', 'on', 'off', 'null', 'undefined' ]
+var typeKeywords = ['var'
+                   ,'void'
+                   ,'int', 'int8', 'int16', 'int32', 'int64'
+                   ,'uint', 'uint8', 'uint16', 'uint32', 'uint64'
+                   ,'float', 'float32', 'float64'
+                   ,'struct']
+                   
+var keywords = [].concat(controlKeywords, functionKeywords, constantKeywords, typeKeywords)
 
 /**
  * Token definitions
@@ -169,3 +169,7 @@ var lexer = function (code) {
 exports = module.exports = lexer
 exports.Symbol = Symbol
 exports.keywords = keywords
+exports.controlKeywords = controlKeywords
+exports.functionKeywords = functionKeywords
+exports.constantKeywords = constantKeywords
+exports.typeKeywords = typeKeywords
