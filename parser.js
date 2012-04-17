@@ -209,7 +209,11 @@ Parser.prototype = {
       if (this.eat('comma')) {
         assignmentExps.push(this.AssignmentExpression())
       } else {
-        return new Symbol('expression', null, assignmentExps)
+        if (assignmentExps.length == 1 && assignmentExps[0].is('expression')) {
+          return assignmentExps[0]
+        } else {
+          return new Symbol('expression', null, assignmentExps)
+        }
       }
     }
   }
@@ -307,7 +311,7 @@ Parser.prototype = {
         value = this.ArrayLiteral()
       } else if (this.expect('curly bracket', '{')) {
         value = this.ObjectLiteral()
-      } else if (this.expect('keyword', /(\\take|\\do)/)) {
+      } else if (this.expect('keyword', /^(\\take|\\do)$/)) {
         value = this.FunctionLiteral()
       } else {
         this.error('Expected a value')
