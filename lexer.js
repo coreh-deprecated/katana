@@ -1,5 +1,7 @@
+var KatanaError = require('./misc').KatanaError
+
 var keywords = ['if', 'else', 'while', 'for'
-               ,'take', 'return'
+               ,'take', 'do', 'return'
                ,'true', 'false', 'yes', 'no', 'on', 'off'
                ,'null'
                ,'undefined'
@@ -117,6 +119,7 @@ var lexer = function (code) {
     , bestToken = { type: 'invalid', value: '' }
     , line = 1
     , column = 1
+    , errors = []
     
   while (code) {
     bestToken = { type: 'invalid', value: '' }
@@ -132,6 +135,10 @@ var lexer = function (code) {
     }
     
     var symbol = new Symbol(bestToken.type, bestToken.value, [], line, column)
+    
+    if (symbol.is('invalid')) {
+      errors.push(new KatanaError('lexical', 'error', 'Invalid token.', line, column, column + symbol.value.length))
+    }
 
     result.push(symbol)
     
@@ -152,7 +159,7 @@ var lexer = function (code) {
   
   result.push(new Symbol('end of file', '', [], line, column))
   
-  return { tokens: result, errors: [] }
+  return { tokens: result, errors: errors }
 }
 
 
