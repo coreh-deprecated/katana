@@ -259,7 +259,8 @@ Parser.prototype = {
 , RelationalExpression: leftAssociativeOperator('BitshiftExpression', 'relational operator', 'relational expression')
 , BitshiftExpression: leftAssociativeOperator('AdditionExpression', 'bitshift operator', 'bitshift expression')
 , AdditionExpression: leftAssociativeOperator('MultiplicationExpression', 'addition operator', 'addition expression')
-, MultiplicationExpression: leftAssociativeOperator('UnaryExpression', 'multiplication operator', 'multiplication expression')
+, MultiplicationExpression: leftAssociativeOperator('ApplyExpression', 'multiplication operator', 'multiplication expression')
+, ApplyExpression: leftAssociativeOperator('UnaryExpression', 'bang', 'apply expression')
 , UnaryExpression: function() {
     var operator
     if (operator = this.eat(['bang', 'tilde', 'addition operator'])) {
