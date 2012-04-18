@@ -6,6 +6,10 @@ var Symbol = lexer.Symbol
 var keywords = lexer.keywords
 var KatanaError = require('./misc').KatanaError
 
+var isTypeName = function(value) {
+  return lexer.typeKeywords.indexOf(value.slice(1)) != -1
+}
+
 var rightAssociativeOperator = function(subExpressionName, optype, type) {
   var Expression = function() {
     var operator, subExpression = this[subExpressionName]()
@@ -170,7 +174,7 @@ Parser.prototype = {
         return this.BreakStatement()
       } else if (keyword.value == '\\continue') {
         return this.ContinueStatement()
-      } 
+      }
     }
     var expression = this.Expression()
     this.automaticSemicolon()
@@ -268,38 +272,18 @@ Parser.prototype = {
 , IncrementExpression: function() {
     var operator
     if (operator = this.eat('increment operator')) {
-      var callExpression = this.CallExpression()
-      return new Symbol('increment expression', null, [operator, callExpression])
+      var memberOrCallExpression = this.MemberOrCallExpression()
+      return new Symbol('increment expression', null, [operator, memberOrCallExpression])
     } else {
-      var callExpression = this.CallExpression()
+      var memberOrCallExpression = this.MemberOrCallExpression()
       if (operator = this.eat('increment operator')) {
-        return new Symbol('increment expression', null, [callExpression, operator])
+        return new Symbol('increment expression', null, [memberOrCallExpression, operator])
       } else {
-        return callExpression
+        return memberOrCallExpression
       }
     }
   }
-, CallExpression: function() {
-    var memberExpression = this.MemberExpression()
-    if (this.eat('paren', '(')) {
-      if (this.eat('paren', ')')) {
-        var result = new Symbol('call expression', null, [memberExpression])
-      } else {
-        var expression = this.Expression()
-        if (!this.eat('paren', ')')) {
-          this.error('Expected `)` at the end of function call')
-        }
-        var result = new Symbol('call expression', null, [memberExpression, expression])
-      }
-      if (this.expect('dot') || this.expect('square bracket', '[')) {
-        return this.MemberExpression(result)
-      }
-      return result
-    } else {
-      return memberExpression
-    }
-  }
-, MemberExpression: function(term) {
+, MemberOrCallExpression: function(term) {
     var identifier
     if (typeof term === 'undefined') {
       term = this.Term()
@@ -310,7 +294,7 @@ Parser.prototype = {
           this.error('Expected identifier after `.`')
         }
         term = new Symbol('literal member expression', null, [term, identifier])
-      } else if (this.eat('square bracket', '[')) {
+      } else if (this.eat('square bracket', '[', false)) {
         var expression = this.Expression()
         if (!this.eat('square bracket', ']')) {
           this.error('Expected `]` at the end of property access')
@@ -321,6 +305,16 @@ Parser.prototype = {
           this.error('Expected identifier after `::`')
         }        
         term = new Symbol('literal prototype expression', null, [term, identifier])
+      } else if (this.eat('paren', '(', false)) {
+        if (this.eat('paren', ')')) {
+          term = new Symbol('call expression', null, [term])
+        } else {
+          var expression = this.Expression()
+          if (!this.eat('paren', ')')) {
+            this.error('Expected `)` at the end of function call')
+          }
+          term = new Symbol('call expression', null, [term, expression])
+        }
       } else {
         return term
       }
@@ -330,9 +324,18 @@ Parser.prototype = {
     var value = this.eat(['string literal', 'number literal', 'identifier'])
     if (!value) {
       if (this.eat('paren', '(')) {
-        value = this.Expression()
-        if (!this.eat('paren', ')')) {
-          this.error('Expected closing paren `)`')
+        if (this.expect('keyword', isTypeName)) {
+          var type = this.Type()
+          if (!this.eat('paren', ')')) {
+            this.error('Expected `)` closing typecast.')
+          }
+          var memberOrCallExpression = this.MemberOrCallExpression()
+          value = new Symbol('typecast', null, [type, memberOrCallExpression])
+        } else {
+          value = this.Expression()
+          if (!this.eat('paren', ')')) {
+            this.error('Expected closing paren `)`')
+          }
         }
       } else if (this.expect('square bracket', '[')) {
         value = this.ArrayLiteral()
@@ -345,6 +348,22 @@ Parser.prototype = {
       }
     }
     return value
+  }
+, Type: function() {
+    var type = [this.eat('keyword')]
+    if (type[0].value == '\\struct') {
+      var name
+      if (name = this.eat('identifier')) {
+        type.push(name)
+      } else {
+        this.error('Expected a struct name')
+      }
+    }
+    var pointer
+    while (pointer = this.eat('multiplication operator', '*')) {
+      type.push(pointer)
+    }
+    return new Symbol('type', null, type)
   }
 , ArrayLiteral: function() {
     this.eat('square bracket', '[')
