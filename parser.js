@@ -177,6 +177,8 @@ Parser.prototype = {
         return this.ContinueStatement()
       } else if (keyword.value == '\\import') {
         return this.ImportStatement()
+      } else if (keyword.value == '\\export') {
+        return this.ExportStatement()
       } else if (lexer.typeKeywords.indexOf(keyword.value.slice(1)) != -1) {
         return this.DeclarationStatement()
       }
@@ -285,6 +287,13 @@ Parser.prototype = {
   }
   return new Symbol('import path', { children: path })
 }
+, ExportStatement: function() {
+    this.eat('keyword', '\\export')
+    var type = this.Type()
+    var declarationList = this.DeclarationList()
+    this.automaticSemicolon('export statement')
+    return new Symbol('export statement', { children: [type, declarationList] })
+  }
 , DeclarationStatement: function() {
   var type = this.Type()
   var declarationList = this.DeclarationList()
