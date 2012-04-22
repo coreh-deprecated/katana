@@ -296,30 +296,30 @@ Parser.prototype = {
     return new Symbol('export statement', { children: [type, declarationList] })
   }
 , DeclarationStatement: function() {
-  var type = this.Type()
-  var declarationList = this.DeclarationList()
-  this.automaticSemicolon('variable declaration')
-  return new Symbol('declaration statement', { children: [type, declarationList] })
-}
+    var type = this.Type()
+    var declarationList = this.DeclarationList()
+    this.automaticSemicolon('variable declaration')
+    return new Symbol('declaration statement', { children: [type, declarationList] })
+  }
 , DeclarationList: function() {
-  var declarations = []
-  for (;;) {
-    declarations.push(this.Declaration())
-    if (!this.eat('comma')) {
-      break
+    var declarations = []
+    for (;;) {
+      declarations.push(this.Declaration())
+      if (!this.eat('comma')) {
+        break
+      }
+    }
+    return new Symbol('declaration list', { children: declarations })
+  }
+, Declaration: function() {
+    var identifier = this.eat('identifier', undefined, undefined, false)
+    if (this.eat('assignment operator', '=')) {
+      var expr = this.LogicalOrExpression()
+      return new Symbol('declaration', { children: [identifier, expr] })
+    } else {
+      return new Symbol('declaration', { children: [identifier] })
     }
   }
-  return new Symbol('declaration list', { children: declarations })
-}
-, Declaration: function() {
-  var identifier = this.eat('identifier', undefined, undefined, false)
-  if (this.eat('assignment operator', '=')) {
-    var expr = this.LogicalOrExpression()
-    return new Symbol('declaration', { children: [identifier, expr] })
-  } else {
-    return new Symbol('declaration', { children: [identifier] })
-  }
-}
 , Expression: function() {
     var assignmentExps = [this.AssignmentExpression()]
     for (;;) {
