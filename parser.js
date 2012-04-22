@@ -4,7 +4,8 @@
 var lexer = require('./lexer')
 var Symbol = lexer.Symbol
 var keywords = lexer.keywords
-var KatanaError = require('./misc').KatanaError
+var misc = require('./misc')
+var KatanaError = misc.KatanaError
 
 var isTypeName = function(value) {
   return lexer.typeKeywords.indexOf(value.slice(1)) != -1
@@ -352,21 +353,45 @@ Parser.prototype = {
     return value
   }
 , Type: function() {
-    var type = [this.eat('keyword')]
-    if (type[0].value == '\\struct') {
-      var name
-      if (name = this.eat('identifier')) {
-        type.push(name)
-      } else {
-        this.error('Expected a struct name')
+    var type
+    var typeNameToken = this.eat('keyword')
+    if (!typeNameToken || lexer.typeKeywords.indexOf(typeNameToken.value.slice(1)) == -1) {
+      this.error('Expected type name.')
+    }
+    if (typeNameToken.value == 'struct') {
+      var structNameToken = this.eat('identifier', undefined, undefined, false)
+      if (!structNameToken) {
+        this.error('Expected struct name.')
+      }
+      type = new Symbol('type', null, [typeNameToken, structNameToken])
+    } else {
+      type = new Symbol('type', null, [typeNameToken])
+    }
+    var pointerToken
+    while (pointerToken = this.eat('multiplication operator', '*')) {
+      type = new Symbol('type', null, [pointerToken, type])
+    }
+    if (this.eat('paren', '(')) {
+      var typeList = this.TypeList()
+      if (!this.eat('paren', ')')) {
+        this.error('Expected `)` after type list')
+      }
+      type = new Symbol('type', null, [type, typeList])
+    }
+    return type
+  }
+, TypeList: function() {
+  var types = []
+  if (!this.expect(')')) {
+    for (;;) {
+      types.push(this.Type())
+      if (!this.eat('comma')) {
+        break;
       }
     }
-    var pointer
-    while (pointer = this.eat('multiplication operator', '*')) {
-      type.push(pointer)
-    }
-    return new Symbol('type', null, type)
   }
+  return new Symbol('type list', null, types)
+}
 , ArrayLiteral: function() {
     this.eat('square bracket', '[')
     if (this.eat('square bracket', ']')) {
