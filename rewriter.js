@@ -21,7 +21,7 @@ var transformOffsideOperator = function(previous) {
   var indent = 0
   var handleOffside = function() {
     var extraTokens
-    result.push(new Symbol('curly bracket', '{', [], tokens[i].line, tokens[i].column, { generatedByOffside: true }))
+    result.push(new Symbol('curly bracket', { value: '{', line: tokens[i].line, column: tokens[i].column, meta: { generatedByOffside: true }}))
     i++
     for (; i < tokens.length; i++) {
       if (tokens[i].is('whitespace')) {
@@ -34,7 +34,7 @@ var transformOffsideOperator = function(previous) {
         break;
       }
     }
-    result.push(new Symbol('curly bracket', '}', [], tokens[i].line, tokens[i].column, { generatedByOffside: true }))
+    result.push(new Symbol('curly bracket', { value: '}', line: tokens[i].line, column: tokens[i].column, meta: { generatedByOffside: true }}))
     if (extraTokens) { Array.prototype.push.apply(result, extraTokens) }
   }
   var handleInlineOffside = function() {
@@ -151,7 +151,7 @@ var replaceRepeatedNewlinesWithSemicolons = function(previous) {
       if (newLineCount == 1) {
         result.push(tokens[i])
       } else if (newLineCount == 2) {
-        result.push(new Symbol('semicolon', ';'))
+        result.push(new Symbol('semicolon', { value: ';', line: tokens[i].line, column: tokens[i].column }))
       } else {
         // omit symbol
       }

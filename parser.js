@@ -18,7 +18,7 @@ var rightAssociativeOperator = function(subExpressionName, optype, type) {
       return subExpression;
     }
     var expression = Expression.apply(this)
-    return new Symbol(type, null, [subExpression, operator, expression])
+    return new Symbol(type, { children: [subExpression, operator, expression] })
   }
   return Expression
 }
@@ -27,7 +27,7 @@ var leftAssociativeOperator = function(subExpressionName, optype, type) {
   return function() {
     var operator, subExpression = this[subExpressionName]()
     while (operator = this.eat(optype)) {
-      subExpression = new Symbol(type, null, [subExpression, operator, this[subExpressionName]()])
+      subExpression = new Symbol(type, { children: [subExpression, operator, this[subExpressionName]()] })
     }
     return subExpression
   }
@@ -156,12 +156,12 @@ Parser.prototype = {
         this.eat('newline', undefined, '*') // skip until newline
       }
     }
-    return new Symbol('statement list', null, statements)
+    return new Symbol('statement list', { children: statements })
   }
 , Statement: function() {
     var semicolon, keyword
     if (semicolon = this.eat('semicolon')) {
-      return new Symbol('empty statement', null, [], semicolon.line, semicolon.column)
+      return new Symbol('empty statement', { line: semicolon.line, column: semicolon.column })
     } else if (keyword = this.expect('keyword')) {
       if (keyword.value == '\\if') {
         return this.IfStatement()
@@ -196,10 +196,10 @@ Parser.prototype = {
         negativeAction = this.Block()
         this.automaticSemicolon()
       }
-      return new Symbol('if statement', null, [condition, action, negativeAction])
+      return new Symbol('if statement', { children: [condition, action, negativeAction] })
     } else {
       this.automaticSemicolon()
-      return new Symbol('if statement', null, [condition, action])      
+      return new Symbol('if statement', { children: [condition, action] })
     }
   }
 , WhileStatement: function() {
@@ -207,40 +207,40 @@ Parser.prototype = {
     var condition = this.Expression()
     var block = this.Block()
     this.automaticSemicolon()
-    return new Symbol('while statement', null, [condition, block])
+    return new Symbol('while statement', { children: [condition, block] })
   }
 , ForStatement: function() {
     this.eat('keyword', '\\for')
     var condition = this.Expression()
     var block = this.Block()
     this.automaticSemicolon()
-    return new Symbol('for statement', null, [condition, block])
+    return new Symbol('for statement', { children: [condition, block] })
   }
 , ReturnStatement: function() {
-    this.eat('keyword', '\\return')
+    var returnToken = this.eat('keyword', '\\return')
     if (this.expect('semicolon') || this.expect('curly bracket', '}') || this.expect('end of file')) {
       this.automaticSemicolon()
-      return new Symbol('return statement', null)
+      return new Symbol('return statement', { line: returnToken.line, column: returnToken.column })
     } else {
-      var value = this.Expression()
+      var expression = this.Expression()
       this.automaticSemicolon()
-      return new Symbol('return statement', null, [value])
+      return new Symbol('return statement', { children: [expression] })
     }
   }
 , BreakStatement: function() {
-    this.eat('keyword', '\\break')
+    var breakKeyword = this.eat('keyword', '\\break')
     this.automaticSemicolon()
-    return new Symbol('break statement', null)
+    return new Symbol('break statement', { line: breakKeyword.line, column: breakKeyword.column })
   }
 , ContinueStatement: function() {
-    this.eat('keyword', '\\continue')
+    var continueKeyword = this.eat('keyword', '\\continue')
     this.automaticSemicolon()
-    return new Symbol('continue statement', null)
+    return new Symbol('continue statement', { line: continueKeyword.line, column: continueKeyword.column })
   }
 , DeclarationStatement: function() {
   var type = this.Type()
   var declarationList = this.DeclarationList()
-  return new Symbol('declaration statement', null, [type, declarationList])
+  return new Symbol('declaration statement', { children: [type, declarationList] })
 }
 , DeclarationList: function() {
   var declarations = []
@@ -250,15 +250,15 @@ Parser.prototype = {
       break
     }
   }
-  return new Symbol('declaration list', null, declarations)
+  return new Symbol('declaration list', { children: declarations })
 }
 , Declaration: function() {
   var identifier = this.eat('identifier', undefined, undefined, false)
   if (this.eat('assignment operator', '=')) {
     var expr = this.LogicalOrExpression()
-    return new Symbol('declaration', null, [identifier, expr])
+    return new Symbol('declaration', { children: [identifier, expr] })
   } else {
-    return new Symbol('declaration', null, [identifier])
+    return new Symbol('declaration', { children: [identifier] })
   }
 }
 , Expression: function() {
@@ -270,7 +270,7 @@ Parser.prototype = {
         if (assignmentExps.length == 1 && assignmentExps[0].is('expression')) {
           return assignmentExps[0]
         } else {
-          return new Symbol('expression', null, assignmentExps)
+          return new Symbol('expression', { children: assignmentExps })
         }
       }
     }
@@ -293,7 +293,7 @@ Parser.prototype = {
     var operator
     if (operator = this.eat(['bang', 'tilde', 'addition operator'])) {
       var incrementExpression = this.IncrementExpression()
-      return new Symbol('unary expression', null, [operator, incrementExpression])
+      return new Symbol('unary expression', { children: [operator, incrementExpression] })
     } else {
       return this.IncrementExpression()
     }
@@ -302,11 +302,11 @@ Parser.prototype = {
     var operator
     if (operator = this.eat('increment operator')) {
       var memberOrCallExpression = this.MemberOrCallExpression()
-      return new Symbol('increment expression', null, [operator, memberOrCallExpression])
+      return new Symbol('increment expression', { children: [operator, memberOrCallExpression] })
     } else {
       var memberOrCallExpression = this.MemberOrCallExpression()
       if (operator = this.eat('increment operator')) {
-        return new Symbol('increment expression', null, [memberOrCallExpression, operator])
+        return new Symbol('increment expression', { children: [memberOrCallExpression, operator] })
       } else {
         return memberOrCallExpression
       }
@@ -322,27 +322,27 @@ Parser.prototype = {
         if (!(identifier = this.eat('identifier'))) {
           this.error('Expected identifier after `.`')
         }
-        term = new Symbol('literal member expression', null, [term, identifier])
+        term = new Symbol('literal member expression', { children: [term, identifier] })
       } else if (this.eat('square bracket', '[', false)) {
         var expression = this.Expression()
         if (!this.eat('square bracket', ']')) {
           this.error('Expected `]` at the end of property access')
         }
-        term = new Symbol('member expression', null, [term, expression])
+        term = new Symbol('member expression', { children: [term, expression] })
       } else if (this.eat('prototype operator')) {
         if (!(identifier = this.eat('identifier'))) {
           this.error('Expected identifier after `::`')
         }        
-        term = new Symbol('literal prototype expression', null, [term, identifier])
+        term = new Symbol('literal prototype expression', { children: [term, identifier] })
       } else if (this.eat('paren', '(', false)) {
         if (this.eat('paren', ')')) {
-          term = new Symbol('call expression', null, [term])
+          term = new Symbol('call expression', { children: [term] })
         } else {
           var expression = this.Expression()
           if (!this.eat('paren', ')')) {
             this.error('Expected `)` at the end of function call')
           }
-          term = new Symbol('call expression', null, [term, expression])
+          term = new Symbol('call expression', { children: [term, expression] })
         }
       } else {
         return term
@@ -359,7 +359,7 @@ Parser.prototype = {
             this.error('Expected `)` closing typecast.')
           }
           var memberOrCallExpression = this.MemberOrCallExpression()
-          value = new Symbol('typecast', null, [type, memberOrCallExpression])
+          value = new Symbol('typecast', { children: [type, memberOrCallExpression] })
         } else {
           value = this.Expression()
           if (!this.eat('paren', ')')) {
@@ -389,20 +389,20 @@ Parser.prototype = {
       if (!structNameToken) {
         this.error('Expected struct name.')
       }
-      type = new Symbol('type', null, [typeNameToken, structNameToken])
+      type = new Symbol('type', { children: [typeNameToken, structNameToken] })
     } else {
-      type = new Symbol('type', null, [typeNameToken])
+      type = new Symbol('type', { children: [typeNameToken] })
     }
     var pointerToken
     while (pointerToken = this.eat('multiplication operator', '*')) {
-      type = new Symbol('type', null, [pointerToken, type])
+      type = new Symbol('type', { children: [pointerToken, type] })
     }
     if (this.eat('paren', '(')) {
       var typeList = this.TypeList()
       if (!this.eat('paren', ')')) {
         this.error('Expected `)` after type list')
       }
-      type = new Symbol('type', null, [type, typeList])
+      type = new Symbol('type', { children: [type, typeList] })
     }
     return type
   }
@@ -416,19 +416,19 @@ Parser.prototype = {
       }
     }
   }
-  return new Symbol('type list', null, types)
+  return new Symbol('type list', { children: types })
 }
 , ArrayLiteral: function() {
     this.eat('square bracket', '[')
     if (this.eat('square bracket', ']')) {
-      return new Symbol('array literal', null, [])
+      return new Symbol('array literal', { children: [] })
     } else {
       var contents = []
       for (;;) {
         try {
           contents.push(this.AssignmentExpression())
           if (this.eat('square bracket', ']')) {
-            return new Symbol('array literal', null, contents)
+            return new Symbol('array literal', { children: contents })
           } else {
             this.automaticComma()
           }
@@ -437,13 +437,13 @@ Parser.prototype = {
           var eaten = this.eat(['newline', 'comma', 'square bracket'], undefined, '*') // skip until newline or comma
           if (eaten && eaten.type === 'square bracket') {
             if (eaten.value == ']') {
-              return new Symbol('array literal', null, contents)
+              return new Symbol('array literal', { children: contents })
             } else {
               this.eat(['newline', 'comma'])
             }
           } else {
             if (this.expect('end of file')) {
-              return new Symbol('array literal', null, contents)
+              return new Symbol('array literal', { children: contents })
             }
           }
         }
@@ -457,7 +457,7 @@ Parser.prototype = {
     }
     this.eat('curly bracket', '{')
     if (this.eat('curly bracket', '}')) {
-      return new Symbol('object literal', null, [])
+      return new Symbol('object literal', { line: openingBracket.line, column: openingBracket.column })
     } else {
       var contents = []
       var key, value
@@ -473,7 +473,7 @@ Parser.prototype = {
           }
           contents.push(key, value)
           if (this.eat('curly bracket', '}')) {
-            return new Symbol('object literal', null, contents)
+            return new Symbol('object literal', { children: contents })
           } else {
             this.automaticComma()
           }
@@ -482,13 +482,13 @@ Parser.prototype = {
           var eaten = this.eat(['newline', 'comma', 'curly bracket'], undefined, '*') // skip until newline or comma
           if (eaten && eaten.type === 'curly bracket') {
             if (eaten.value == '}') {
-              return new Symbol('object literal', null, contents)
+              return new Symbol('object literal', { children: contents })
             } else {
               this.eat(['newline', 'comma'])
             }
           } else {
             if (this.expect('end of file')) {
-              return new Symbol('object literal', null, contents)
+              return new Symbol('object literal', { children: contents })
             }
           }
         }
@@ -498,9 +498,9 @@ Parser.prototype = {
   }
 , FunctionLiteral: function() {
     if (this.eat('keyword', '\\take')) {
-      return new Symbol('function literal', null, [this.Expression(), this.Block()])
+      return new Symbol('function literal', { children: [this.Expression(), this.Block()] })
     } else if (this.eat('keyword', '\\do')) {
-      return new Symbol('function literal', null, [this.Block()])
+      return new Symbol('function literal', { children: [this.Block()] })
     }
   }
 }

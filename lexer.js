@@ -53,30 +53,20 @@ var tokens = {
 /**
  * Represents a Symbol in the parse tree
  * @param {String} type      The symbol type
- * @param {String} value     The symbol value
- * @param {String} children  The symbol's children (optional)
- * @param {Number} line      The symbol's line (optional)
- * @param {Number} column    The symbol's column (optional)
+ * @param {Object} options   The token options: type, value, 
+                             children, line, column and metadata
  */
-var Symbol = function(type, value, children, line, column, meta) {
-  if (typeof meta == 'undefined') {
-    meta = {}
-  }
+var Symbol = function(type, options) {
   this.type = type
-  this.value = value
-  this.line = line
-  this.column = column
-  this.meta = meta
-  if (typeof children === 'undefined') {
-    this.children = []
-  } else {
-    this.children = children
-    if (children.length > 0) {
-      if (typeof line === 'undefined') {
-        this.line = this.children[0].line
-        this.column = this.children[0].column
-      }
-    }
+  this.value = options.value
+  this.line = options.line
+  this.column = options.column
+  this.meta = options.meta || {}
+  this.children = options.children || []
+  // Automatically set line and column based on first child token
+  if (typeof this.line === 'undefined' && this.children.length > 0) {
+    this.line = this.children[0].line
+    this.column = this.children[0].column
   }
 }
 
@@ -134,7 +124,7 @@ var lexer = function (code) {
       }
     }
     
-    var symbol = new Symbol(bestToken.type, bestToken.value, [], line, column)
+    var symbol = new Symbol(bestToken.type, { value: bestToken.value, line: line, column: column })
     
     if (symbol.is('invalid')) {
       errors.push(new KatanaError('lexical', 'error', 'Invalid token.', line, column, column + symbol.value.length))
@@ -154,10 +144,10 @@ var lexer = function (code) {
   
   if (bestToken.type != 'newline') {
     // Add missing newline
-    result.push(new Symbol('newline', '\n', [], line, column))
+    result.push(new Symbol('newline', { value: '\n', line: line, column: column }))
   }
   
-  result.push(new Symbol('end of file', '', [], line, column))
+  result.push(new Symbol('end of file', { value: '', line:line, column: column }))
   
   return { tokens: result, errors: errors }
 }
