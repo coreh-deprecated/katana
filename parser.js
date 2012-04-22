@@ -240,6 +240,7 @@ Parser.prototype = {
 , DeclarationStatement: function() {
   var type = this.Type()
   var declarationList = this.DeclarationList()
+  this.automaticSemicolon()
   return new Symbol('declaration statement', { children: [type, declarationList] })
 }
 , DeclarationList: function() {
