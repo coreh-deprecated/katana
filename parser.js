@@ -175,6 +175,8 @@ Parser.prototype = {
         return this.BreakStatement()
       } else if (keyword.value == '\\continue') {
         return this.ContinueStatement()
+      } else if (lexer.typeKeywords.indexOf(keyword.value.slice(1)) != -1) {
+        return this.DeclarationStatement()
       }
     }
     var expression = this.Expression()
@@ -235,6 +237,30 @@ Parser.prototype = {
     this.automaticSemicolon()
     return new Symbol('continue statement', null)
   }
+, DeclarationStatement: function() {
+  var type = this.Type()
+  var declarationList = this.DeclarationList()
+  return new Symbol('declaration statement', null, [type, declarationList])
+}
+, DeclarationList: function() {
+  var declarations = []
+  for (;;) {
+    declarations.push(this.Declaration())
+    if (!this.eat('comma')) {
+      break
+    }
+  }
+  return new Symbol('declaration list', null, declarations)
+}
+, Declaration: function() {
+  var identifier = this.eat('identifier', undefined, undefined, false)
+  if (this.eat('assignment operator', '=')) {
+    var expr = this.LogicalOrExpression()
+    return new Symbol('declaration', null, [identifier, expr])
+  } else {
+    return new Symbol('declaration', null, [identifier])
+  }
+}
 , Expression: function() {
     var assignmentExps = [this.AssignmentExpression()]
     for (;;) {
