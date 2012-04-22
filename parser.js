@@ -175,6 +175,8 @@ Parser.prototype = {
         return this.BreakStatement()
       } else if (keyword.value == '\\continue') {
         return this.ContinueStatement()
+      } else if (keyword.value == '\\import') {
+        return this.ImportStatement()
       } else if (lexer.typeKeywords.indexOf(keyword.value.slice(1)) != -1) {
         return this.DeclarationStatement()
       }
@@ -237,6 +239,52 @@ Parser.prototype = {
     this.automaticSemicolon('continue statement')
     return new Symbol('continue statement', { line: continueKeyword.line, column: continueKeyword.column })
   }
+, ImportStatement: function() {
+    this.eat('keyword', '\\import')
+    var acceptFrom = true
+    var importPaths = []
+    for (;;) {
+      var importPath = this.ImportPath()
+      if (importPath.length > 1 || importPath.children[0].type != 'identifier') {
+        acceptFrom = false
+      }
+      importPaths.push(importPath)
+      if (!this.eat('comma')) {
+        break
+      }
+    }
+    if (this.expect('keyword', '\\from')) {
+      if (!acceptFrom) {
+        this.error('Invalid use of `from`. One or more import paths already supplyied.')
+      }
+      this.eat('keyword', '\\from')
+      importPaths.push(this.ImportPath())
+      return new Symbol('import from statement', { children: importPaths })
+    }
+    return new Symbol('import statement', { children: importPaths })
+  }
+, ImportPath: function() {
+  var path = []
+  var token
+  for (;;) {
+    if (token = this.eat('identifier', undefined, undefined, false)) {
+      path.push(token)
+    } else if (token = this.eat('dot')) {
+      path.push(token)
+      if (token = this.eat('dot')) {
+        path.push(token)
+      }
+    } else {
+      this.error('Unexpected token in import path.')
+    }
+    if (token = this.eat('multiplication operator', '/')) {
+      path.push(token)
+    } else {
+      break
+    }
+  }
+  return new Symbol('import path', { children: path })
+}
 , DeclarationStatement: function() {
   var type = this.Type()
   var declarationList = this.DeclarationList()

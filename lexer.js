@@ -9,8 +9,9 @@ var typeKeywords = ['var'
                    ,'uint', 'uint8', 'uint16', 'uint32', 'uint64'
                    ,'float', 'float32', 'float64'
                    ,'struct']
+var moduleKeywords = [ 'import', 'export', 'from' ]
                    
-var keywords = [].concat(controlKeywords, functionKeywords, constantKeywords, typeKeywords)
+var keywords = [].concat(controlKeywords, functionKeywords, constantKeywords, typeKeywords, moduleKeywords)
 
 /**
  * Token definitions
@@ -163,3 +164,4 @@ exports.controlKeywords = controlKeywords
 exports.functionKeywords = functionKeywords
 exports.constantKeywords = constantKeywords
 exports.typeKeywords = typeKeywords
+exports.moduleKeywords = moduleKeywords
