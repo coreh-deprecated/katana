@@ -110,11 +110,11 @@ Parser.prototype = {
       return null
     }
   }
-, automaticSemicolon: function() {
+, automaticSemicolon: function(context) {
   if (!this.eat('semicolon')) {
     if (!this.eat('newline', undefined, false)) {
       if (!this.expect('curly bracket', '}')) {
-        this.error('Expected `;`.')
+        this.error('Expected `;` after ' + context + '.')
       }
     }
   }
@@ -180,7 +180,7 @@ Parser.prototype = {
       }
     }
     var expression = this.Expression()
-    this.automaticSemicolon()
+    this.automaticSemicolon('expression')
     return expression
   }
 , IfStatement: function() {
@@ -194,11 +194,11 @@ Parser.prototype = {
         negativeAction = this.IfStatement()
       } else {
         negativeAction = this.Block()
-        this.automaticSemicolon()
+        this.automaticSemicolon('else statement')
       }
       return new Symbol('if statement', { children: [condition, action, negativeAction] })
     } else {
-      this.automaticSemicolon()
+      this.automaticSemicolon('if statement')
       return new Symbol('if statement', { children: [condition, action] })
     }
   }
@@ -206,41 +206,41 @@ Parser.prototype = {
     this.eat('keyword', '\\while')
     var condition = this.Expression()
     var block = this.Block()
-    this.automaticSemicolon()
+    this.automaticSemicolon('while statement')
     return new Symbol('while statement', { children: [condition, block] })
   }
 , ForStatement: function() {
     this.eat('keyword', '\\for')
     var condition = this.Expression()
     var block = this.Block()
-    this.automaticSemicolon()
+    this.automaticSemicolon('for statement')
     return new Symbol('for statement', { children: [condition, block] })
   }
 , ReturnStatement: function() {
     var returnToken = this.eat('keyword', '\\return')
     if (this.expect('semicolon') || this.expect('curly bracket', '}') || this.expect('end of file')) {
-      this.automaticSemicolon()
+      this.automaticSemicolon('return statement')
       return new Symbol('return statement', { line: returnToken.line, column: returnToken.column })
     } else {
       var expression = this.Expression()
-      this.automaticSemicolon()
+      this.automaticSemicolon('return statement')
       return new Symbol('return statement', { children: [expression] })
     }
   }
 , BreakStatement: function() {
     var breakKeyword = this.eat('keyword', '\\break')
-    this.automaticSemicolon()
+    this.automaticSemicolon('break statement')
     return new Symbol('break statement', { line: breakKeyword.line, column: breakKeyword.column })
   }
 , ContinueStatement: function() {
     var continueKeyword = this.eat('keyword', '\\continue')
-    this.automaticSemicolon()
+    this.automaticSemicolon('continue statement')
     return new Symbol('continue statement', { line: continueKeyword.line, column: continueKeyword.column })
   }
 , DeclarationStatement: function() {
   var type = this.Type()
   var declarationList = this.DeclarationList()
-  this.automaticSemicolon()
+  this.automaticSemicolon('variable declaration')
   return new Symbol('declaration statement', { children: [type, declarationList] })
 }
 , DeclarationList: function() {
