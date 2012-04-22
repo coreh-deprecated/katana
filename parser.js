@@ -263,6 +263,7 @@ Parser.prototype = {
       importPaths.push(this.ImportPath())
       return new Symbol('import from statement', { children: importPaths })
     }
+    this.automaticSemicolon('import statement')
     return new Symbol('import statement', { children: importPaths })
   }
 , ImportPath: function() {
