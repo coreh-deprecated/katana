@@ -547,7 +547,7 @@ Parser.prototype = {
   }
 , FunctionLiteral: function() {
     if (this.eat('keyword', '\\take')) {
-      return new Symbol('function literal', { children: [this.Expression(), this.Block()] })
+      return new Symbol('function literal', { children: [this.DeclarationList(), this.Block()] })
     } else if (this.eat('keyword', '\\do')) {
       return new Symbol('function literal', { children: [this.Block()] })
     }
