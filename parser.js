@@ -255,24 +255,19 @@ Parser.prototype = {
     if (semicolon = this.eat('semicolon')) {
       return new Symbol('empty statement', { line: semicolon.line, column: semicolon.column })
     } else if (keyword = this.expect('keyword')) {
-      if (keyword.value == '\\if') {
-        return this.IfStatement()
-      } else if (keyword.value == '\\while') {
-        return this.WhileStatement()
-      } else if (keyword.value == '\\for') {
-        return this.ForStatement()
-      } else if (keyword.value == '\\return') {
-        return this.ReturnStatement()
-      } else if (keyword.value == '\\break') {
-        return this.BreakStatement()
-      } else if (keyword.value == '\\continue') {
-        return this.ContinueStatement()
-      } else if (keyword.value == '\\import') {
-        return this.ImportStatement()
-      } else if (keyword.value == '\\export') {
-        return this.ExportStatement()
-      } else if (lexer.typeKeywords.indexOf(keyword.value.slice(1)) != -1) {
-        return this.DeclarationStatement()
+      switch (keyword.value) {
+      case '\\if': return this.IfStatement()
+      case '\\while': return this.WhileStatement()
+      case '\\for': return this.ForStatement()
+      case '\\return': return this.ReturnStatement()
+      case '\\break': return this.BreakStatement()
+      case '\\continue': return this.ContinueStatement()
+      case '\\import': return this.ImportStatement()
+      case '\\export': return this.ExportStatement()
+      default: 
+        if (isTypeName(keyword.value)) {
+          return this.DeclarationStatement()
+        }
       }
     }
     var expression = this.Expression()
@@ -283,6 +278,7 @@ Parser.prototype = {
   /**
    * IfStatement ::= "if" Expression Block ";"
    *               | "if" Expression "else" Block ";"
+   *               | "if" Expression "else" IfStatement
    */
   
   IfStatement: function() {
@@ -687,7 +683,7 @@ Parser.prototype = {
   Type: function() {
     var type
     var typeNameToken = this.eat('keyword')
-    if (!typeNameToken || lexer.typeKeywords.indexOf(typeNameToken.value.slice(1)) == -1) {
+    if (!typeNameToken || isTypeName(typeNameToken.value) == -1) {
       this.error('Expected type name.')
     }
     if (typeNameToken.value == 'struct') {
