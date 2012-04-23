@@ -63,19 +63,19 @@ Parser.prototype = {
   
   scope: function() {
     return this.scopeStack[this.scopeStack.length - 1]
-  }
+  },
   
   /**
    * Report an error 
    * @param {String} msg The error message
    */
      
-, error: function(msg) {
+  error: function(msg) {
     var next = this.next()
     var error = new KatanaError('syntax', 'error', msg, next.line, next.column, next.column + next.value.length)
     this.errors.push(error)
     throw error
-  }
+  },
   
   /**
    * Return the next token, or a token relative to the next token.
@@ -84,7 +84,7 @@ Parser.prototype = {
    * @param {Boolean} autoKeywords  Whether to automatically convert identifiers in keywords
    */
   
-, next: function(offset, autoKeywords) {
+  next: function(offset, autoKeywords) {
     if (typeof offset === 'undefined') {
       offset = 0
     }
@@ -100,7 +100,7 @@ Parser.prototype = {
       }
     }
     return token
-  }
+  },
   
   /**
    * Test if the next token is of the specified type and value, optionally
@@ -111,7 +111,7 @@ Parser.prototype = {
    * @param {Boolean} autoKeywords
    */
   
-, expect: function(type, value, skip, autoKeywords) {
+  expect: function(type, value, skip, autoKeywords) {
     var next, originalPosition
     if (typeof skip === 'undefined') {
       skip = 'newline'
@@ -130,14 +130,14 @@ Parser.prototype = {
     } else {
       return null
     }
-  }
+  },
   
   /**
    * Eat the next token if it is of the specified type and value, optionally
    * skipping tokens and converting identifiers to keywords
    */  
   
-, eat: function(type, value, skip, autoKeywords) {
+  eat: function(type, value, skip, autoKeywords) {
     var next, originalPosition
     if (typeof skip === 'undefined') {
       skip = 'newline'
@@ -159,14 +159,14 @@ Parser.prototype = {
       }
       return null
     }
-  }
+  },
   
   /**
    * Performs automatic semicolon insertion (ASI)
    * @param {String} context  Used for error reporting.
    */
   
-, automaticSemicolon: function(context) {
+  automaticSemicolon: function(context) {
     if (!this.eat('semicolon')) {
       if (!this.eat('newline', undefined, false)) {
         if (!this.expect('curly bracket', '}')) {
@@ -174,39 +174,39 @@ Parser.prototype = {
         }
       }
     }
-  }
+  },
   
   /**
    * Performs automatic comma insertion
    */
 
-, automaticComma: function() {
+  automaticComma: function() {
     if (!this.eat('comma')) {
       if (!this.eat('newline', undefined, false)) {
         this.error('Expected `,`.')
       }
     }
-  }
+  },
 
   /**
    * Program ::= StatementList
    */
   
-, Program: function() {
-  var statementList 
-  try {
-    statementList = this.StatementList()
-  } catch (err) { 
-    if (err.name !== 'KatanaError') { throw err }
-  }
-  return statementList
-}
+  Program: function() {
+    var statementList 
+    try {
+      statementList = this.StatementList()
+    } catch (err) { 
+      if (err.name !== 'KatanaError') { throw err }
+    }
+    return statementList
+  },
 
   /**
    * Block ::= "{" StatementList "}"
    */
 
-, Block: function() {
+  Block: function() {
     if (!this.eat('curly bracket', '{')) {
       this.error('Expected block of code.')
     }
@@ -215,14 +215,14 @@ Parser.prototype = {
       this.error('Expected end of block.')
     }
     return statementList
-  }
+  },
   
   /**
    * StatementList ::= StatementList Statement
    *                 | ""
    */
   
-, StatementList: function() {
+  StatementList: function() {
     var statements = []
     while (!(this.expect('curly bracket', '}') || 
             this.expect('end of file'))) {
@@ -234,7 +234,7 @@ Parser.prototype = {
       }
     }
     return new Symbol('statement list', { children: statements })
-  }
+  },
   
   /**
    * Statement ::= IfStatement
@@ -250,7 +250,7 @@ Parser.prototype = {
    *             | ";"
    */
   
-, Statement: function() {
+  Statement: function() {
     var semicolon, keyword
     if (semicolon = this.eat('semicolon')) {
       return new Symbol('empty statement', { line: semicolon.line, column: semicolon.column })
@@ -278,14 +278,14 @@ Parser.prototype = {
     var expression = this.Expression()
     this.automaticSemicolon('expression')
     return expression
-  }
+  },
   
   /**
    * IfStatement ::= "if" Expression Block ";"
    *               | "if" Expression "else" Block ";"
    */
   
-, IfStatement: function() {
+  IfStatement: function() {
     this.eat('keyword', '\\if')
     var condition = this.Expression()
     var action = this.Block()
@@ -303,38 +303,38 @@ Parser.prototype = {
       this.automaticSemicolon('if statement')
       return new Symbol('if statement', { children: [condition, action] })
     }
-  }
+  },
   
   /**
    * WhileStatement ::= "while" Expression Block ";"
    */
 
-, WhileStatement: function() {
+  WhileStatement: function() {
     this.eat('keyword', '\\while')
     var condition = this.Expression()
     var block = this.Block()
     this.automaticSemicolon('while statement')
     return new Symbol('while statement', { children: [condition, block] })
-  }
+  },
 
   /**
    * ForStatement ::= "for" Expression Block ";"
    */
 
-, ForStatement: function() {
+  ForStatement: function() {
     this.eat('keyword', '\\for')
     var condition = this.Expression()
     var block = this.Block()
     this.automaticSemicolon('for statement')
     return new Symbol('for statement', { children: [condition, block] })
-  }
+  },
   
   /**
    * ReturnStatement ::= "return" Expression ";"
    *                   | "return" ";"
    */
 
-, ReturnStatement: function() {
+  ReturnStatement: function() {
     var returnToken = this.eat('keyword', '\\return')
     if (this.expect('semicolon') || this.expect('curly bracket', '}') || this.expect('end of file')) {
       this.automaticSemicolon('return statement')
@@ -344,27 +344,27 @@ Parser.prototype = {
       this.automaticSemicolon('return statement')
       return new Symbol('return statement', { children: [expression] })
     }
-  }
+  },
 
   /**
    * BreakStatement ::= "break" ";"
    */
 
-, BreakStatement: function() {
+  BreakStatement: function() {
     var breakKeyword = this.eat('keyword', '\\break')
     this.automaticSemicolon('break statement')
     return new Symbol('break statement', { line: breakKeyword.line, column: breakKeyword.column })
-  }
+  },
 
   /**
    * ContinueStatement ::= "continue" ";"
    */
 
-, ContinueStatement: function() {
+  ContinueStatement: function() {
     var continueKeyword = this.eat('keyword', '\\continue')
     this.automaticSemicolon('continue statement')
     return new Symbol('continue statement', { line: continueKeyword.line, column: continueKeyword.column })
-  }
+  },
   
   /**
    * ImportStatement ::= "import" ImportList "from" ImportPath ";"
@@ -377,7 +377,7 @@ Parser.prototype = {
    *                  | ImportPath
    */
   
-, ImportStatement: function() {
+  ImportStatement: function() {
     this.eat('keyword', '\\import')
     var acceptFrom = true
     var importPaths = []
@@ -401,7 +401,7 @@ Parser.prototype = {
     }
     this.automaticSemicolon('import statement')
     return new Symbol('import statement', { children: importPaths })
-  }
+  },
   
   /**
    * ImportPath ::= ImportPathComponent "/" ImportPath
@@ -410,58 +410,58 @@ Parser.prototype = {
    * ImportPathComponent ::= <identifier> | "." | ".."
    */
   
-, ImportPath: function() {
-  var path = []
-  var token
-  for (;;) {
-    if (token = this.eat('identifier', undefined, undefined, false)) {
-      path.push(token)
-    } else if (token = this.eat('dot')) {
-      path.push(token)
-      if (token = this.eat('dot')) {
+  ImportPath: function() {
+    var path = []
+    var token
+    for (;;) {
+      if (token = this.eat('identifier', undefined, undefined, false)) {
         path.push(token)
+      } else if (token = this.eat('dot')) {
+        path.push(token)
+        if (token = this.eat('dot')) {
+          path.push(token)
+        }
+      } else {
+        this.error('Unexpected token in import path.')
       }
-    } else {
-      this.error('Unexpected token in import path.')
+      if (token = this.eat('multiplication operator', '/')) {
+        path.push(token)
+      } else {
+        break
+      }
     }
-    if (token = this.eat('multiplication operator', '/')) {
-      path.push(token)
-    } else {
-      break
-    }
-  }
-  return new Symbol('import path', { children: path })
-}
+    return new Symbol('import path', { children: path })
+  },
 
   /**
    * ExportStatement ::= "export" DeclarationList ";"
    */
 
-, ExportStatement: function() {
+  ExportStatement: function() {
     this.eat('keyword', '\\export')
     var type = this.Type()
     var declarationList = this.DeclarationList()
     this.automaticSemicolon('export statement')
     return new Symbol('export statement', { children: [type, declarationList] })
-  }
+  },
 
   /**
    * DeclarationStatement ::= Type DeclarationList ";"
    */
 
-, DeclarationStatement: function() {
+  DeclarationStatement: function() {
     var type = this.Type()
     var declarationList = this.DeclarationList()
     this.automaticSemicolon('variable declaration')
     return new Symbol('declaration statement', { children: [type, declarationList] })
-  }
+  },
   
   /**
    * DeclarationList ::= Declaration "," DeclarationList
    *                   | Declaration
    */
    
-, DeclarationList: function() {
+  DeclarationList: function() {
     var declarations = []
     for (;;) {
       declarations.push(this.Declaration())
@@ -470,14 +470,14 @@ Parser.prototype = {
       }
     }
     return new Symbol('declaration list', { children: declarations })
-  }
+  },
   
   /**
    * Declaration ::= Identifier
    *               | Identifier "=" AssignmentExpression
    */
   
-, Declaration: function() {
+  Declaration: function() {
     var identifier = this.eat('identifier', undefined, undefined, false)
     if (this.eat('assignment operator', '=')) {
       var expr = this.AssignmentExpression()
@@ -485,14 +485,14 @@ Parser.prototype = {
     } else {
       return new Symbol('declaration', { children: [identifier] })
     }
-  }
+  },
   
   /**
    * Expression ::= AssignmentExpression "," Expression
    *              | AssignmentExpression
    */
 
-, Expression: function() {
+  Expression: function() {
     var assignmentExps = [this.AssignmentExpression()]
     for (;;) {
       if (this.eat('comma')) {
@@ -505,53 +505,53 @@ Parser.prototype = {
         }
       }
     }
-  }
+  },
   
   /**
    * Operators - Topmost has lowest precedence, bottommost has highest precedence
    */
 
    // AssignmentExpression ::= LogicalOrExpression <assignment operator> AssignmentExpression | LogicalOrExpression
-, AssignmentExpression: rightAssociativeOperator('LogicalOrExpression', 'assignment operator', 'assignment expression')
+  AssignmentExpression: rightAssociativeOperator('LogicalOrExpression', 'assignment operator', 'assignment expression'),
 
   // LogicalOrExpression ::= LogicalOrExpression <logical or operator> LogicalXorExpression | LogicalXorExpression
-, LogicalOrExpression: leftAssociativeOperator('LogicalXorExpression', 'logical or operator', 'logical expression')
+  LogicalOrExpression: leftAssociativeOperator('LogicalXorExpression', 'logical or operator', 'logical expression'),
 
   // LogicalXorExpression ::= LogicalXorExpression <logical xor operator> LogicalAndExpression | LogicalAndExpression
-, LogicalXorExpression: leftAssociativeOperator('LogicalAndExpression', 'logical xor operator', 'logical expression')
+  LogicalXorExpression: leftAssociativeOperator('LogicalAndExpression', 'logical xor operator', 'logical expression'),
 
   // LogicalAndExpression ::= LogicalAndExpression <logical and operator> BitwiseOrExpression | BitwiseOrExpression
-, LogicalAndExpression: leftAssociativeOperator('BitwiseOrExpression', 'logical and operator', 'logical expression')
+  LogicalAndExpression: leftAssociativeOperator('BitwiseOrExpression', 'logical and operator', 'logical expression'),
 
   // BitwiseOrExpression ::= BitwiseOrExpression <bitwise or operator> BitwiseXorExpression | BitwiseXorExpression
-, BitwiseOrExpression: leftAssociativeOperator('BitwiseXorExpression', 'bitwise or operator', 'bitwise expression')
+  BitwiseOrExpression: leftAssociativeOperator('BitwiseXorExpression', 'bitwise or operator', 'bitwise expression'),
 
   // BitwiseXorExpression ::= BitwiseXorExpression <bitwise xor operator> BitwiseAndExpression | BitwiseAndExpression
-, BitwiseXorExpression: leftAssociativeOperator('BitwiseAndExpression', 'bitwise xor operator', 'bitwise expression')
+  BitwiseXorExpression: leftAssociativeOperator('BitwiseAndExpression', 'bitwise xor operator', 'bitwise expression'),
 
   // BitwiseAndExpression ::= BitwiseAndExpression <bitwise and operator> EqualityExpression | EqualityExpression
-, BitwiseAndExpression: leftAssociativeOperator('EqualityExpression', 'bitwise and operator', 'bitwise expression')
+  BitwiseAndExpression: leftAssociativeOperator('EqualityExpression', 'bitwise and operator', 'bitwise expression'),
 
   // EqualityExpression ::= EqualityExpression <equality operator> RelationalExpression | RelationalExpression
-, EqualityExpression: leftAssociativeOperator('RelationalExpression', 'equality operator', 'equality expression')
+  EqualityExpression: leftAssociativeOperator('RelationalExpression', 'equality operator', 'equality expression'),
 
   // RelationalExpression ::= RelationalExpression <relational operator> BitshiftExpression | BitshiftExpression
-, RelationalExpression: leftAssociativeOperator('BitshiftExpression', 'relational operator', 'relational expression')
+  RelationalExpression: leftAssociativeOperator('BitshiftExpression', 'relational operator', 'relational expression'),
 
   // BitshiftExpression ::= BitshiftExpression <bitshift operator> AdditionExpression | AdditionExpression
-, BitshiftExpression: leftAssociativeOperator('AdditionExpression', 'bitshift operator', 'bitshift expression')
+  BitshiftExpression: leftAssociativeOperator('AdditionExpression', 'bitshift operator', 'bitshift expression'),
 
   // AdditionExpression ::= AdditionExpression <addition operator> MultiplicationExpression | MultiplicationExpression
-, AdditionExpression: leftAssociativeOperator('MultiplicationExpression', 'addition operator', 'addition expression')
+  AdditionExpression: leftAssociativeOperator('MultiplicationExpression', 'addition operator', 'addition expression'),
 
   // MultiplicationExpression ::= MultiplicationExpression <multiplication operator> ApplyExpression | ApplyExpression
-, MultiplicationExpression: leftAssociativeOperator('ApplyExpression', 'multiplication operator', 'multiplication expression')
+  MultiplicationExpression: leftAssociativeOperator('ApplyExpression', 'multiplication operator', 'multiplication expression'),
 
   // ApplyExpression ::= ApplyExpression <bang> InheritanceExpression | InheritanceExpression
-, ApplyExpression: leftAssociativeOperator('InheritanceExpression', 'bang', 'apply expression')
+  ApplyExpression: leftAssociativeOperator('InheritanceExpression', 'bang', 'apply expression'),
 
   // InheritanceExpression ::= InheritanceExpression <colon> UnaryExpression | UnaryExpression
-, InheritanceExpression: leftAssociativeOperator('UnaryExpression', 'colon', 'inheritance expression')
+  InheritanceExpression: leftAssociativeOperator('UnaryExpression', 'colon', 'inheritance expression'),
 
   /**
    * UnaryExpression ::= <bang> IncrementExpression
@@ -560,7 +560,7 @@ Parser.prototype = {
    *                   | IncrementExpression
    */
    
-, UnaryExpression: function() {
+  UnaryExpression: function() {
     var operator
     if (operator = this.eat(['bang', 'tilde', 'addition operator'])) {
       var incrementExpression = this.IncrementExpression()
@@ -568,7 +568,7 @@ Parser.prototype = {
     } else {
       return this.IncrementExpression()
     }
-  }
+  },
   
   /**
    * IncrementExpression ::= <increment operator> MemberOrCallExpression
@@ -576,7 +576,7 @@ Parser.prototype = {
    *                       | MemberOrCallExpression
    */
    
-, IncrementExpression: function() {
+  IncrementExpression: function() {
     var operator
     if (operator = this.eat('increment operator')) {
       var memberOrCallExpression = this.MemberOrCallExpression()
@@ -589,7 +589,7 @@ Parser.prototype = {
         return memberOrCallExpression
       }
     }
-  }
+  },
   
   /**
    * MemberOrCallExpression ::= MemberOrCallExpression "." <identifier>
@@ -599,7 +599,7 @@ Parser.prototype = {
    *                          | Term
    */
    
-, MemberOrCallExpression: function(term) {
+  MemberOrCallExpression: function(term) {
     var identifier
     if (typeof term === 'undefined') {
       term = this.Term()
@@ -635,7 +635,7 @@ Parser.prototype = {
         return term
       }
     }
-  }
+  },
   
   /**
    * Term ::= "(" Expression ")"
@@ -648,7 +648,7 @@ Parser.prototype = {
    *        | FunctionLiteral
    */
    
-, Term: function() {
+  Term: function() {
     var value = this.eat(['string literal', 'number literal', 'identifier'])
     if (!value) {
       if (this.eat('paren', '(')) {
@@ -676,7 +676,7 @@ Parser.prototype = {
       }
     }
     return value
-  }
+  },
   
   /**
    * Type ::= Type "(" TypeList ")"
@@ -684,7 +684,7 @@ Parser.prototype = {
    *        | <type keyword>
    */
    
-, Type: function() {
+  Type: function() {
     var type
     var typeNameToken = this.eat('keyword')
     if (!typeNameToken || lexer.typeKeywords.indexOf(typeNameToken.value.slice(1)) == -1) {
@@ -711,7 +711,7 @@ Parser.prototype = {
       type = new Symbol('type', { children: [type, typeList] })
     }
     return type
-  }
+  },
   
   /**
    * TypeList ::= ""
@@ -721,18 +721,18 @@ Parser.prototype = {
    *                    | Type
    */
    
-, TypeList: function() {
-  var types = []
-  if (!this.expect(')')) {
-    for (;;) {
-      types.push(this.Type())
-      if (!this.eat('comma')) {
-        break;
+  TypeList: function() {
+    var types = []
+    if (!this.expect(')')) {
+      for (;;) {
+        types.push(this.Type())
+        if (!this.eat('comma')) {
+          break;
+        }
       }
     }
-  }
-  return new Symbol('type list', { children: types })
-}
+    return new Symbol('type list', { children: types })
+  },
 
   /**
    * ArrayLiteral ::= "[" "]"
@@ -742,7 +742,7 @@ Parser.prototype = {
    *                        | AssignmentExpression
    */
    
-, ArrayLiteral: function() {
+  ArrayLiteral: function() {
     this.eat('square bracket', '[')
     if (this.eat('square bracket', ']')) {
       return new Symbol('array literal', { children: [] })
@@ -773,7 +773,7 @@ Parser.prototype = {
         }
       }
     }
-  }
+  },
   
   /**
    * ObjectLiteral ::= "{" "}"
@@ -788,7 +788,7 @@ Parser.prototype = {
    *                         | <identifier>
    */
 
-, ObjectLiteral: function() {
+  ObjectLiteral: function() {
     var openingBracket = this.expect('curly bracket', '{')
     if (openingBracket.meta.generatedByOffside) {
       this.error('Expected value.')
@@ -830,17 +830,16 @@ Parser.prototype = {
             }
           }
         }
-        
       }
     }
-  }
+  },
   
   /**
    * FunctionLiteral ::= "take" DeclarationList Block
    *                   | "do" Block
    */
    
-, FunctionLiteral: function() {
+  FunctionLiteral: function() {
     if (this.eat('keyword', '\\take')) {
       return new Symbol('function literal', { children: [this.DeclarationList(), this.Block()] })
     } else if (this.eat('keyword', '\\do')) {
