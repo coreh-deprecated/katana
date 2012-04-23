@@ -314,15 +314,32 @@ Parser.prototype = {
   },
 
   /**
-   * ForStatement ::= "for" Expression Block ";"
+   * ForStatement ::= "for" <identifier> "in" Expression Block ";"
+   *                | "for" <identifier> ":" <identifier> "in" Expression Block ";" 
    */
 
   ForStatement: function() {
+    var children = []
     this.eat('keyword', '\\for')
-    var condition = this.Expression()
-    var block = this.Block()
+    var identifier = this.eat('identifier', undefined, undefined, false)
+    if (identifier) {
+      children.push(identifier)
+    } else {
+      this.error('Expected identifier.')
+    }
+    if (this.eat('colon')) {
+      identifier = this.eat('identifier', undefined, undefined, false)
+      if (identifier) {
+        children.push(identifier)
+      } else {
+        this.error('Expected identifier.')
+      }
+    }    
+    this.eat('keyword', '\\in')
+    children.push(this.Expression())
+    children.push(this.Block())
     this.automaticSemicolon('for statement')
-    return new Symbol('for statement', { children: [condition, block] })
+    return new Symbol('for statement', { children: children })
   },
   
   /**
@@ -430,15 +447,12 @@ Parser.prototype = {
   },
 
   /**
-   * ExportStatement ::= "export" DeclarationList ";"
+   * ExportStatement ::= "export" DeclarationStatement
    */
 
   ExportStatement: function() {
     this.eat('keyword', '\\export')
-    var type = this.Type()
-    var declarationList = this.DeclarationList()
-    this.automaticSemicolon('export statement')
-    return new Symbol('export statement', { children: [type, declarationList] })
+    return new Symbol('export statement', { children: [this.DeclarationStatement()] })
   },
 
   /**
@@ -695,10 +709,9 @@ Parser.prototype = {
     } else {
       type = new Symbol('type', { children: [typeNameToken] })
     }
-    
     for (;;) {
-      var pointerToken
-      if (pointerToken = this.eat('multiplication operator', '*')) {
+      var pointerToken = this.eat('multiplication operator', '*')
+      if (pointerToken) {
         type = new Symbol('type', { children: [pointerToken, type] })
       } else if (this.eat('paren', '(')) {
         var typeList = this.TypeList()
