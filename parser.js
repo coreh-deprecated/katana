@@ -695,16 +695,20 @@ Parser.prototype = {
     } else {
       type = new Symbol('type', { children: [typeNameToken] })
     }
-    var pointerToken
-    while (pointerToken = this.eat('multiplication operator', '*')) {
-      type = new Symbol('type', { children: [pointerToken, type] })
-    }
-    if (this.eat('paren', '(')) {
-      var typeList = this.TypeList()
-      if (!this.eat('paren', ')')) {
-        this.error('Expected `)` after type list')
+    
+    for (;;) {
+      var pointerToken
+      if (pointerToken = this.eat('multiplication operator', '*')) {
+        type = new Symbol('type', { children: [pointerToken, type] })
+      } else if (this.eat('paren', '(')) {
+        var typeList = this.TypeList()
+        if (!this.eat('paren', ')')) {
+          this.error('Expected `)` after type list')
+        }
+        type = new Symbol('type', { children: [type, typeList] })
+      } else {
+        break
       }
-      type = new Symbol('type', { children: [type, typeList] })
     }
     return type
   },
