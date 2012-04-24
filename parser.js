@@ -2,7 +2,7 @@
  * Module Dependencies
  */
 var lexer = require('./lexer')
-var Symbol = lexer.Symbol
+var Symbol = require('./symbol')
 var keywords = lexer.keywords
 var misc = require('./misc')
 var KatanaError = misc.KatanaError

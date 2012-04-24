@@ -1,15 +1,27 @@
+/**
+ * Module Dependencies
+ */
 var KatanaError = require('./misc').KatanaError
+var Symbol = require('./symbol')
 
+/**
+ * Keyword Definitions
+ */
 var controlKeywords = ['if', 'else', 'while', 'for', 'break', 'continue']
+
 var functionKeywords = [ 'take', 'do', 'return' ]
+
 var constantKeywords = [ 'true', 'false', 'yes', 'no', 'on', 'off', 'null', 'undefined' ]
+
 var typeKeywords = ['var'
                    ,'void'
                    ,'int', 'int8', 'int16', 'int32', 'int64'
                    ,'uint', 'uint8', 'uint16', 'uint32', 'uint64'
                    ,'float', 'float32', 'float64'
                    ,'struct']
+
 var moduleKeywords = [ 'import', 'export', 'from' ]
+
 var operatorKeywords = [ 'in', 'sizeof', 'instanceof' ]
                    
 var keywords = [].concat(controlKeywords, functionKeywords, constantKeywords, typeKeywords, moduleKeywords, operatorKeywords)
@@ -50,55 +62,6 @@ var tokens = {
 , 'colon': /^\:/
 , 'semicolon': /^\;/
 , 'invalid': /^[\s\S]/
-}
-
-/**
- * Represents a Symbol in the parse tree
- * @param {String} type      The symbol type
- * @param {Object} options   The token options: type, value, 
-                             children, line, column and metadata
- */
-var Symbol = function(type, options) {
-  this.type = type
-  this.value = options.value
-  this.line = options.line
-  this.column = options.column
-  this.meta = options.meta || {}
-  this.children = options.children || []
-  // Automatically set line and column based on first child token
-  if (typeof this.line === 'undefined' && this.children.length > 0) {
-    this.line = this.children[0].line
-    this.column = this.children[0].column
-  }
-}
-
-/**
- * Checks if a Symbol is of a given type. Optionally check its value.
- * @param {String} type                   The symbol type
- * @param {String,Regexp,Function} value  The symbol value (optional)
- */
-Symbol.prototype.is = function(type, value) {
-  if (type instanceof Array) {
-    if (type.indexOf(this.type) === -1) {
-      return false
-    }
-  } else {
-    if (type !== '*' && type !== this.type) {
-      return false
-    }
-  }
-  if (typeof value !== 'undefined') {
-    if (typeof value === 'string' || value instanceof String) {
-      return this.value === value
-    } else if (value instanceof RegExp) {
-      return !!this.value.match(value)
-    } else if (value instanceof Function) {
-      return !!value(this.value)
-    } else {
-      return false
-    }
-  }
-  return true
 }
 
 /**
@@ -159,7 +122,6 @@ var lexer = function (code) {
  * Exports
  */
 exports = module.exports = lexer
-exports.Symbol = Symbol
 exports.keywords = keywords
 exports.controlKeywords = controlKeywords
 exports.functionKeywords = functionKeywords
