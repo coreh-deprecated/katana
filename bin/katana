@@ -1,0 +1,66 @@
+#!/usr/bin/env node
+
+/**
+ * Module Dependencies
+ */
+var ansi = require('ansi')
+var fs = require('fs')
+var compiler = require('../lib')
+var program = require('commander')
+var misc = require('../lib/misc')
+var cursor = ansi(process.stderr)
+
+/**
+ * Error Codes
+ */
+var SUCCESS = 0         // Compilation successful
+var IO_ERROR = 1        // Unable to read or write files
+var SOURCE_ERROR = 2    // Errors in one or more source files
+var INTERNAL_ERROR = 3  // Internal logic error in the compiler
+
+/**
+ * Grab package.json for version info
+ */
+var packageJSON = JSON.parse(fs.readFileSync(__dirname + '/../package.json', 'utf-8'))
+
+program
+  .usage('[options] <input file>')
+  .version(packageJSON.version)
+  .parse(process.argv)
+
+var filename = program.args[0]
+
+if (!filename) {
+  console.log('error: no input file')
+  process.exit(IO_ERROR)
+}
+
+try {
+  var code = fs.readFileSync(filename, 'utf-8')
+} catch(err) {
+  console.log('error: could not read input file')
+  process.exit(IO_ERROR)
+}
+
+try {
+  var result = compiler(code)
+  if (result.errors.length > 0) {
+    misc.writeErrors(process.stderr, filename, code, result.errors)
+    process.exit(SOURCE_ERROR)
+  } else {
+    misc.writeTree(process.stdout, result.program)
+    process.exit(SUCCESS)
+  }
+} catch (err) {
+  cursor.red()
+  process.stderr.write('INTERNAL ERROR.')
+  cursor.reset()
+  process.stderr.write('\n\nThe compiler encountered an internal logic error.\nThis is not a problem with your code, but within the compiler itself.\n\nPlease report this entire error log at ')
+  cursor.blue()
+  cursor.underline()
+  process.stderr.write('https://github.com/coreh/katana')
+  cursor.reset()
+  process.stderr.write(',\nif possible along with the input that uncovered the error.\n\nSorry for the inconvenience.\n\n')
+  console.error(err.stack)
+  process.exit(INTERNAL_ERROR)
+}

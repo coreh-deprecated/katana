@@ -1,0 +1,20 @@
+{
+  "author": "Marco Aurélio",
+  "name": "katana",
+  "keywords": ["compiler", "programming", "language"],
+  "description": "Compiler for the Katana programming language",
+  "version": "0.0.1",
+  "repository": "http://github.com/Coreh/katana.git",
+  "homepage": "http://coreh.github.com/katana/",
+  "engines": {
+    "node": ">=0.6.15 < 0.7.0"
+  },
+  "dependencies": {
+    "commander": "~0.6.0",
+    "ansi": "~0.1.0"
+  },
+  "bin": {
+    "katana": "./bin/katana"
+  },
+  "devDependencies": {}
+}
