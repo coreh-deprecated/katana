@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>name</key>
+	<string>Katana Indenting</string>
+	<key>scope</key>
+	<string>source.k</string>
+	<key>settings</key>
+	<dict>
+		<key>decreaseIndentPattern</key>
+		<string>^.*\}$</string>
+		<key>increaseIndentPattern</key>
+		<string>^.*(\-\&gt;|\{)$</string>
+	</dict>
+	<key>uuid</key>
+	<string>E8626477-406F-4413-B9BB-EA490167107C</string>
+</dict>
+</plist>
