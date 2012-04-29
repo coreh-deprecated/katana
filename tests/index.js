@@ -1,21 +1,21 @@
-var compiler = require('../lib')
+var katana = require('../lib')
 var fs = require('fs')
 var ansi = require('ansi')
 var cursor = ansi(process.stdout)
 
 var compile = function(path) {
-  var code = fs.readFileSync(path, 'utf-8')
-  return compiler(code)
+  var compiler = new katana.Compiler()
+  compiler.compile(path)
+  return compiler
 }
 
 var test = function(program) {
   try {
     cursor.write(program + ': ')
-    var errors = compile(__dirname + '/' + program + '.k').errors
-    if (errors.length == 0) {
-      cursor.green().write('accept\n').reset()
-    } else {
+    if (compile(__dirname + '/' + program + '.k').failed) {
       cursor.red().write('reject\n').reset()
+    } else {
+      cursor.green().write('accept\n').reset()
     }
   } catch (e) {
     cursor.red().write('internal error\n').reset()    
