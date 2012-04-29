@@ -5,17 +5,18 @@
  */
 var ansi = require('ansi')
 var fs = require('fs')
-var compiler = require('../lib')
 var program = require('commander')
-var misc = require('../lib/misc')
+
 var cursor = ansi(process.stderr)
+
+var katana = require('../lib')
 
 /**
  * Error Codes
  */
 var SUCCESS = 0         // Compilation successful
 var IO_ERROR = 1        // Unable to read or write files
-var SOURCE_ERROR = 2    // Errors in one or more source files
+var COMPILATION_ERROR = 2    // Errors in one or more source files
 var INTERNAL_ERROR = 3  // Internal logic error in the compiler
 
 /**
@@ -31,36 +32,29 @@ program
 var filename = program.args[0]
 
 if (!filename) {
-  console.log('error: no input file')
+  cursor.write('error: no input file\n')
   process.exit(IO_ERROR)
 }
 
 try {
-  var code = fs.readFileSync(filename, 'utf-8')
-} catch(err) {
-  console.log('error: could not read input file')
-  process.exit(IO_ERROR)
-}
-
-try {
-  var result = compiler(code)
-  if (result.errors.length > 0) {
-    misc.writeErrors(process.stderr, filename, code, result.errors)
-    process.exit(SOURCE_ERROR)
+  var compiler = new katana.Compiler()
+  var result = compiler.compile(filename)
+  compiler.writeErrors(process.stderr)
+  if (compiler.failed) {
+    process.exit(COMPILATION_ERROR)
   } else {
-    misc.writeTree(process.stdout, result.program)
     process.exit(SUCCESS)
   }
 } catch (err) {
-  cursor.red()
-  process.stderr.write('INTERNAL ERROR.')
-  cursor.reset()
-  process.stderr.write('\n\nThe compiler encountered an internal logic error.\nThis is not a problem with your code, but within the compiler itself.\n\nPlease report this entire error log at ')
-  cursor.blue()
-  cursor.underline()
-  process.stderr.write('https://github.com/coreh/katana')
-  cursor.reset()
-  process.stderr.write(',\nif possible along with the input that uncovered the error.\n\nSorry for the inconvenience.\n\n')
-  console.error(err.stack)
-  process.exit(INTERNAL_ERROR)
+  if (err.code == 'ENOENT') {
+    cursor.write('error: could not read input file `' + err.path + '`.\n')
+    process.exit(IO_ERROR)
+  } else {
+    cursor.red().write('INTERNAL ERROR.').reset()
+    cursor.write('\n\nThe compiler encountered an internal logic error.\nThis is not a problem with your code, but within the compiler itself.\n\nPlease report this entire error log at ')
+    cursor.blue().underline().write('https://github.com/coreh/katana').reset()
+    cursor.write(',\nif possible along with the input that uncovered the error.\n\nSorry for the inconvenience.\n\n')
+    cursor.write(err.stack).write('\n')
+    process.exit(INTERNAL_ERROR)
+  }
 }
