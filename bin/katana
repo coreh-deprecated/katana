@@ -6,6 +6,7 @@
 var ansi = require('ansi')
 var fs = require('fs')
 var program = require('commander')
+var path = require('path')
 
 var cursor = ansi(process.stderr)
 
@@ -30,6 +31,9 @@ program
   .parse(process.argv)
 
 var filename = program.args[0]
+if (!filename.match(/^\//)) {
+  filename = path.join(process.cwd(), filename)
+}
 
 if (!filename) {
   cursor.write('error: no input file\n')
@@ -54,7 +58,12 @@ try {
     cursor.write('\n\nThe compiler encountered an internal logic error.\nThis is not a problem with your code, but within the compiler itself.\n\nPlease report this entire error log at ')
     cursor.blue().underline().write('https://github.com/coreh/katana').reset()
     cursor.write(',\nif possible along with the input that uncovered the error.\n\nSorry for the inconvenience.\n\n')
-    cursor.write(err.stack).write('\n')
+    if (err.stack) {
+      cursor.write(err.stack.toString())
+    } else {
+      cursor.write(err.toString())
+    }
+    cursor.write('\n')
     process.exit(INTERNAL_ERROR)
   }
 }
