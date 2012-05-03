@@ -1,0 +1,1 @@
+export float one = 1.0
