@@ -34,6 +34,9 @@ var tests =
 , 'acceptance/009.variables'
 , 'acceptance/010.offside'
 , 'acceptance/011.scope'
+, 'acceptance/012.exports'
+, 'acceptance/013.imports'
+, 'acceptance/014.prototypes'
 ]
 
 tests.forEach(test)
