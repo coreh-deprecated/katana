@@ -1,0 +1,262 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Why I am Creating a Programming Language</title>
+    
+    <meta name="author" content="Marco Aurélio">
+
+    <!-- Le HTML5 shim, for IE6-8 support of HTML elements -->
+    <!--[if lt IE 9]>
+      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+    <!-- Le styles -->
+    <link href="/assets/themes/katana/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/assets/themes/katana/css/style.css?body=1" rel="stylesheet" type="text/css" media="all">
+
+    <!-- Le fav and touch icons -->
+  <!-- Update these with your own images
+    <link rel="shortcut icon" href="images/favicon.ico">
+    <link rel="apple-touch-icon" href="images/apple-touch-icon.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="images/apple-touch-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="images/apple-touch-icon-114x114.png">
+  -->
+  </head>
+
+  <body>
+
+    <a href="https://github.com/coreh/katana"><img style="position: fixed; top: 0; right: 0; border: 0; z-index: 1" src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub"></a>
+
+    <div class="navbar">
+      <div class="navbar-inner">
+        <div class="container">
+          <a class="brand" href="/">The Katana Programming Language</a>
+          <ul class="nav">
+            
+            
+            
+
+
+  
+    
+      
+      	
+      	<li><a href="/archive.html">Archive</a></li>
+      	
+      
+    
+  
+    
+      
+    
+  
+    
+      
+      	
+      	<li><a href="/categories.html">Categories</a></li>
+      	
+      
+    
+  
+    
+      
+    
+  
+    
+      
+      	
+      	<li><a href="/pages.html">Pages</a></li>
+      	
+      
+    
+  
+    
+      
+    
+  
+    
+      
+      	
+      	<li><a href="/tags.html">Tags</a></li>
+      	
+      
+    
+  
+
+
+
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="container">
+
+      <div class="content">
+        
+<div class="page-header">
+  <h1>Why I am Creating a Programming Language  <small>(And You Should, Too!)</small></h1>
+</div>
+
+<div class="row">
+  <div class="span8">
+    <p><img src='http://imgs.xkcd.com/comics/standards.png' alt='XKCD Comic on Standards' /></p>
+
+<h2 id='an_unusual_week'>An unusual week</h2>
+
+<p>If you are a frequent Hacker News visitor who is interested in programming language design, this week has probably not gone unnoticed to you: <strong>Two new programming languages</strong> were introduced: <a href='http://blog.lse.epita.fr/articles/12-c---system-oriented-programming.html'>C!</a> and <a href='http://mbebenita.github.com/Mvm/'>&#42;JS</a>.</p>
+
+<p>Before I jump right in and introduce a <em>third one</em>, I would like to comment on something that surprised me this week: The <strong>unusually positive reception</strong> given to these languages.</p>
+
+<h2 id='a_warm_welcome'>A warm welcome</h2>
+
+<p>Over the years I&#8217;ve grown accustomed to the reception new programming languages usually get, to the point where I instinctively recoil when I see a new programming language being announced. You consistently get phrases like:</p>
+
+<ul>
+<li>&#8220;We don&#8217;t need yet another programming language!&#8221;;</li>
+
+<li>&#8220;I can already do that in <b>X</b>!&#8221;;</li>
+
+<li>&#8220;You&#8217;re only contributing to rework and fragmentation&#8221;.</li>
+</ul>
+
+<p>Putting aside the occasional snarky comment, what I saw this week was the exact opposite of this: <strong>Insightful discussion and motivating posts</strong>. The following comment (by Hacker News user antirez on the introduction of C!) specifically caught my attention:</p>
+
+<p><em>&#8220;I would love to see ten attempts every year, trying to solve the same problem &#91;system programming&#93;.&#8221;</em> (<a href='http://news.ycombinator.com/item?id=3948808'>Source</a>)</p>
+
+<p>This exactly sums up my feelings about designing new languages.</p>
+
+<h2 id='you_might_not_notice_it_was_broken_until_someone_fixes_it'>You might not notice it was broken until someone fixes it</h2>
+
+<p>We need new programming languages. Why do we need them? Because statements taking the form <strong>we don&#8217;t need X</strong> are, very often, wrong in hindsight. To give a few examples:</p>
+
+<ul>
+<li>Before JSON was <a href='http://inkdroid.org/journal/2012/04/30/lessons-of-json/'>discovered</a>, an easy thought for someone using XML would be that &#8220;we don&#8217;t need more formats to represent structured data in plain text&#8221;;</li>
+
+<li>Before the iPhone launched (and keep in mind that was only five years ago), a whole industry had a very clear picture of what were and what were not the needs of their customers. Needless to say, they were pretty much wrong. Today&#8217;s marketshare leader (Android) didn&#8217;t even exist then;</li>
+
+<li>Same goes for the iPad (<em>&#8220;we don&#8217;t need another tablet&#8221;</em>);</li>
+
+<li><a href='http://www.extremetech.com/computing/79620-who-cares-about-googles-chrome-browser'>We don&#8217;t need</a> <a href='http://untyped.com/untyping/2008/09/02/googles-chrome-browser/'>another browser</a>.</li>
+</ul>
+
+<h2 id='programming_languages_are_not_ac_chargers'>Programming languages are not A/C chargers</h2>
+
+<p>The <a href='http://xkcd.com/927/'>xkcd comic</a> on the beginning of this post (one of my personal favorites) has a pretty good point on the creation of new standards: When you create a new standard to address the problems of the existing <em>n</em> standards, <strong>you end up with <em>n+1</em> standards.</strong></p>
+
+<p>That&#8217;s a real nuisance when you have to <a href='http://en.wikipedia.org/wiki/AC_power_plugs_and_sockets#Types_in_present_use'>plug an electric equipment you got from abroad to your outlet</a>, or when the text of a Web page <a href='http://en.wikipedia.org/wiki/Mojibake'>shows up garbled</a> because someone messed up with their encodings.</p>
+
+<p>When it comes to programming, having <em>n+1</em> languages is <strong>not a nuisance</strong>. If you think it is, you might be confusing programming languages with execution environments. For instance, calling C code from Java can be quite annoying because Java code runs on the JVM, while C code runs natively. Calling Scala code from Java or vice versa <a href='http://www.codecommit.com/blog/java/interop-between-java-and-scala'>is actually pretty straightforward</a>. So is calling JavaScript from CoffeeScript. Or C from Objective-C, C++ or D.</p>
+
+<p>Programming languages are not like A/C chargers. They are <strong>tools for human expression</strong>; and as such, you can never really have enough of them.</p>
+
+<h2 id='its_not_rework_if_its_not_work'>It&#8217;s not rework if it&#8217;s not work</h2>
+
+<p>What about <strong>all the rework</strong> that goes into a new programming language? After all, you have to specify the grammar and semantics, write a compiler, debug it, write a run-time library, debug it, write a standard library, debug it&#8230; The list goes on indefinitely. From a pure cost/benefit perspective that time could sure be better spent on something else.</p>
+
+<p>But then I ask you, why do people still paint? Anyone could surely hit Google <a href='http://www.google.com/search?q=still+life'>with a search for still life</a>, copy the top image result and print it on a A3 sheet; it would be much cheaper than the cost of even a single canvas. But people still paint because painting is an intellectual endeavor: a <em>pretty fun</em> intellectual endeavor.</p>
+
+<p>Coding is very much like painting. It can be work, but it can also be a past-time. Creating a new programming language can be really fun, and as a bonus you get to learn a lot about the fundamentals of computing.</p>
+
+<h2 id='im_not_smart_enough_to_create_the_ideal_language_and_i_dont_care'>I&#8217;m not smart enough to create the ideal language, and I don&#8217;t care</h2>
+
+<p><a href='http://en.wikipedia.org/wiki/Universal_Darwinism'>Universal darwinism</a> is the extension of Darwinism to fields other than biological evolution. On <a href='http://www.ted.com/talks/susan_blackmore_on_memes_and_temes.html'>this TED Talk</a>, Susan Blackmore elaborates on how <strong>human ideas are subject to natural selection</strong> just like living things. In fact, she states that whenever you have three fundamental factors in place &#8212; variation, selection and heredity &#8212; with enough time, design arises spontaneously.</p>
+
+<p>Programming languages are subject to all of the three factors: Whenever you create a new programming language you add <em>variation</em>; since languages are inspired by other languages, you have <em>heredity</em>; finally, <em>selection</em> takes place thanks to popularity/obscurity. That means that us, mere mortals, can still contribute to the overall landscape of programming languages even if we&#8217;re not white-bearded wizards, simply by <em>trying</em>. That is enough motivation for me to create a programming language. And I think you should try it too.</p>
+
+<h2 id='enter_katana'>Enter Katana</h2>
+
+<p>Katana is a new programming language I&#8217;m working on. Its goal is to mix high level JavaScript-like semantics with C in a natively compiled language that still favors performance and predictability. Possible applications include games, web servers, compilers and embed systems. Over the next few weeks I&#8217;ll post more details on the thought process behind the language as well on the progress being made with the compiler.</p>
+
+<p><img src='/assets/images/logo.png' alt='Katana Logo' /></p>
+    <hr>
+    <div class="pagination">
+      <ul>
+      
+        <li class="prev disabled"><a>&larr; Previous</a></li>
+      
+        <li><a href="/archive.html">Archive</a></li>
+      
+        <li class="next disabled"><a>Next &rarr;</a>
+      
+      </ul>
+    </div>
+    <hr>
+    
+
+
+  <div id="disqus_thread"></div>
+<script type="text/javascript">
+    var disqus_developer = 1;
+    var disqus_shortname = 'jekyllbootstrap'; // required: replace example with your forum shortname
+    
+    /* * * DON'T EDIT BELOW THIS LINE * * */
+    (function() {
+        var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+        dsq.src = 'http://' + disqus_shortname + '.disqus.com/embed.js';
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">blog comments powered by <span class="logo-disqus">Disqus</span></a>
+
+
+
+
+  </div>
+  
+  <div class="span4">
+    <h4>Published</h4>
+    <div class="date"><span>14 May 2012</span></div>
+
+  
+    <h4>Tags</h4>
+    <ul class="tag_box">
+    
+    
+
+
+  
+     
+    	<li><a href="/tags.html#programming languages-ref">programming languages <span>1</span></a></li>
+     
+    	<li><a href="/tags.html#reception-ref">reception <span>1</span></a></li>
+     
+    	<li><a href="/tags.html#hindsight-ref">hindsight <span>1</span></a></li>
+     
+    	<li><a href="/tags.html#rework-ref">rework <span>1</span></a></li>
+     
+    	<li><a href="/tags.html#universal darwinism-ref">universal darwinism <span>1</span></a></li>
+    
+  
+
+
+
+    </ul>
+  
+    <hr>
+    <h3>About the Author</h3>
+    <img style="float: left; margin: 0 8px 108px 0; width: 64px; height: 64px" src="https://secure.gravatar.com/avatar/3e197df029c3d7741457afe1b1cfb01e?s=140">
+    I am a JavaScript developer and programming language enthusiast from <a href="http://en.wikipedia.org/wiki/Belo_Horizonte">Belo Horizonte</a>, Brazil. 
+    I'm currently studying Computer Engineering at <a href='http://decom.cefetmg.br'>CEFET-MG</a>. Here's <a href="https://github.com/coreh">my GitHub profile</a>. You may also want to check out my other open source project, the <a href="http://coreh.github.com/nide">Nide IDE</a>.
+  </div>
+</div>
+
+
+      </div>
+
+      <footer>
+        <p>&copy; 2012, Marco Aurélio 
+          with help from <a href="http://jekyllbootstrap.com" target="_blank" title="The Definitive Jekyll Blogging Framework">Jekyll Bootstrap</a>
+          and <a href="http://twitter.github.com/bootstrap/" target="_blank">Twitter Bootstrap</a>
+        </p>
+      </footer>
+
+    </div> <!-- /container -->
+
+    
+  </body>
+</html>
+

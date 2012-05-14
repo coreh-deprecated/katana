@@ -1,0 +1,230 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>The Katana Programming Language</title>
+    
+    <meta name="author" content="Marco Aurélio">
+
+    <!-- Le HTML5 shim, for IE6-8 support of HTML elements -->
+    <!--[if lt IE 9]>
+      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+    <!-- Le styles -->
+    <link href="/assets/themes/katana/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/assets/themes/katana/css/style.css?body=1" rel="stylesheet" type="text/css" media="all">
+
+    <!-- Le fav and touch icons -->
+  <!-- Update these with your own images
+    <link rel="shortcut icon" href="images/favicon.ico">
+    <link rel="apple-touch-icon" href="images/apple-touch-icon.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="images/apple-touch-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="images/apple-touch-icon-114x114.png">
+  -->
+  </head>
+
+  <body>
+
+    <a href="https://github.com/coreh/katana"><img style="position: fixed; top: 0; right: 0; border: 0; z-index: 1" src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub"></a>
+
+    <div class="navbar">
+      <div class="navbar-inner">
+        <div class="container">
+          <a class="brand" href="/">The Katana Programming Language</a>
+          <ul class="nav">
+            
+            
+            
+
+
+  
+    
+      
+      	
+      	<li><a href="/archive.html">Archive</a></li>
+      	
+      
+    
+  
+    
+      
+    
+  
+    
+      
+      	
+      	<li><a href="/categories.html">Categories</a></li>
+      	
+      
+    
+  
+    
+      
+    
+  
+    
+      
+      	
+      	<li><a href="/pages.html">Pages</a></li>
+      	
+      
+    
+  
+    
+      
+    
+  
+    
+      
+      	
+      	<li><a href="/tags.html">Tags</a></li>
+      	
+      
+    
+  
+
+
+
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="container">
+
+      <div class="content">
+        
+<div class="row">
+  <div class="span8">
+    <h1 id='katana_'>Katana <small>— have your cake and eat it</small></h1>
+
+<h2 id='what_is_katana'>What is katana?</h2>
+
+<p><strong>Katana</strong> is a general-purpose programming language currently under development as a research project at the Department of Computing of the <a href='http://decom.cefetmg.br'>Federal Center of Technological Education of Minas Gerais</a>.</p>
+
+<p>The language goal is to combine JavaScript&#8217;s semantics with C&#8217;s performance and predictability. Its no-compromise approach makes it ideal for writing games, web servers, compilers and mobile applications.</p>
+
+<p>Once fully-functional, the Katana compiler will use your existing C compiler as a back-end, so that you can quickly get your code running on just about anything.</p>
+
+<p><img src='/assets/images/compilation.png' alt='Katana Compilation Process' /></p>
+
+<h2 id='language_features'>Language Features</h2>
+
+<ul>
+<li>Object Orientation with Prototypal Inheritance</li>
+
+<li>JS-Like objects &amp; arrays</li>
+
+<li>JSON for denoting object literals</li>
+
+<li>First class functions + closures</li>
+
+<li>Automatic Reference Counting</li>
+
+<li>Late <em>this</em> binding.</li>
+
+<li>CommonJS-like modules with automatic compilation of dependencies</li>
+
+<li>Small runtime library</li>
+
+<li>C-like syntax</li>
+
+<li>Optional Python-like offside syntax</li>
+</ul>
+
+<h2 id='what_does_it_look_like'>What does it look like?</h2>
+
+<p>Katana&#8217;s syntax makes the language look very similar to other C-like languages. At the same time, it allows for optional indentation-defined blocks, and for the omission of semicolons.</p>
+<pre>
+<b>import</b> read, write <b>from</b> io/sync;
+
+<b>int</b> n = read();
+
+<b>var</b> factorial = <b>take</b> x {
+  <b>if</b> x > 0 {
+    <b>return</b> x * factorial(x - 1);
+  } <b>else</b> {
+    <b>return</b> 1;
+  }
+}
+
+<b>int</b> r = factorial(n);
+
+write(r);
+</pre><pre>
+<b>import</b> read, write <b>from</b> io/sync
+
+<b>int</b> n = read()
+
+<b>var</b> factorial = <b>take</b> x ->
+  <b>if</b> x > 0 ->
+    <b>return</b> x * factorial(x - 1)
+  <b>else</b> ->
+    <b>return</b> 1
+
+<b>int</b> r = factorial(n)
+
+write(r)
+</pre>
+  </div>
+  <div class="span4">
+    <h2>Quick Info</h2>
+    <table>
+      <tr>
+        <th colspan="2"><img src='/assets/images/logo.png'></th>
+      </tr>
+      <tr>
+        <th colspan="2"><h3>The Katana Programming Language</h3></th>
+      </tr>
+      <tr>
+        <th>Syntax</th>
+        <td>C-like</td>
+      </tr>
+      <tr>
+        <th>Paradigms</th>
+        <td>Imperative, Object-Oriented (Prototypal), Functional</td>
+      </tr>
+      <tr>
+        <th>Typing Discipline</th>
+        <td>Strong &amp; Static, Weak &amp; Dynamic</td>
+      </tr>
+      <tr>
+        <th>Influenced By</th>
+        <td>C, D, JavaScript, CoffeeScript</td>
+      </tr>
+      <tr>
+        <td colspan=2><hr></td>
+      </tr>
+      <tr>
+        <th colspan="2"><h3>The Katana Compiler</h3></th>
+      </tr>
+      <tr>
+        <th>License</th>
+        <td>MIT</td>
+      </tr>
+      <tr>
+        <th>Github Repo</th>
+        <td><a href="https://github.com/coreh/katana">https://github.com/coreh/katana</a></td>
+      </tr>
+    </table>
+  </div>
+</div>
+
+
+      </div>
+
+      <footer>
+        <p>&copy; 2012, Marco Aurélio 
+          with help from <a href="http://jekyllbootstrap.com" target="_blank" title="The Definitive Jekyll Blogging Framework">Jekyll Bootstrap</a>
+          and <a href="http://twitter.github.com/bootstrap/" target="_blank">Twitter Bootstrap</a>
+        </p>
+      </footer>
+
+    </div> <!-- /container -->
+
+    
+  </body>
+</html>
+

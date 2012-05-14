@@ -1,0 +1,10 @@
+
+http://katanalang.org/archive.html
+http://katanalang.org/atom.xml
+http://katanalang.org/categories.html
+http://katanalang.org/index.html
+http://katanalang.org/pages.html
+http://katanalang.org/sitemap.txt
+http://katanalang.org/tags.html
+
+http://katanalang.org/meta/2012/05/14/why-I-am-creating-a-language

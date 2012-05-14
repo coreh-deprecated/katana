@@ -1,0 +1,45 @@
+<div class="page-header">
+  <h1>{{ page.title }} {% if page.tagline %} <small>{{ page.tagline }}</small>{% endif %}</h1>
+</div>
+
+<div class="row">
+  <div class="span8">
+    {{ content }}
+    <hr>
+    <div class="pagination">
+      <ul>
+      {% if page.previous %}
+        <li class="prev"><a href="{{ BASE_PATH }}{{ page.previous.url }}" title="{{ page.previous.title }}">&larr; Previous</a></li>
+      {% else %}
+        <li class="prev disabled"><a>&larr; Previous</a></li>
+      {% endif %}
+        <li><a href="{{ BASE_PATH }}{{ site.JB.archive_path }}">Archive</a></li>
+      {% if page.next %}
+        <li class="next"><a href="{{ BASE_PATH }}{{ page.next.url }}" title="{{ page.next.title }}">Next &rarr;</a></li>
+      {% else %}
+        <li class="next disabled"><a>Next &rarr;</a>
+      {% endif %}
+      </ul>
+    </div>
+    <hr>
+    {% include JB/comments %}
+  </div>
+  
+  <div class="span4">
+    <h4>Published</h4>
+    <div class="date"><span>{{ page.date | date_to_long_string }}</span></div>
+
+  {% unless page.tags == empty %}
+    <h4>Tags</h4>
+    <ul class="tag_box">
+    {% assign tags_list = page.tags %}
+    {% include JB/tags_list %}
+    </ul>
+  {% endunless %}
+    <hr>
+    <h3>About the Author</h3>
+    <img style="float: left; margin: 0 8px 108px 0; width: 64px; height: 64px" src="https://secure.gravatar.com/avatar/3e197df029c3d7741457afe1b1cfb01e?s=140">
+    I am a JavaScript developer and programming language enthusiast from <a href="http://en.wikipedia.org/wiki/Belo_Horizonte">Belo Horizonte</a>, Brazil. 
+    I'm currently studying Computer Engineering at <a href='http://decom.cefetmg.br'>CEFET-MG</a>. Here's <a href="https://github.com/coreh">my GitHub profile</a>. You may also want to check out my other open source project, the <a href="http://coreh.github.com/nide">Nide IDE</a>.
+  </div>
+</div>
