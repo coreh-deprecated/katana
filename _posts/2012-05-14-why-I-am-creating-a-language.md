@@ -11,7 +11,7 @@ tags : [programming languages, reception, hindsight, rework, universal darwinism
 
 ## An unusual week
 
-If you are a frequent Hacker News visitor who is interested in programming language design, this week has probably not gone unnoticed to you: **Two new programming languages** were introduced: [C!](http://blog.lse.epita.fr/articles/12-c---system-oriented-programming.html) and [&#42;JS](http://mbebenita.github.com/Mvm/).
+If you are a frequent Hacker News visitor who is interested in programming language design, this week has probably not gone unnoticed to you: **Two new programming languages** were introduced: [C!](http://blog.lse.epita.fr/articles/12-c---system-oriented-programming.html) and <del>&#42;JS</del> [LLJS](http://mbebenita.github.com/Mvm/).
 
 Before I jump right in and introduce a *third one*, I would like to comment on something that surprised me this week: The **unusually positive reception** given to these languages.
 
