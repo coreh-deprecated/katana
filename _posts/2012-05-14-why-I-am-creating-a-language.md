@@ -34,7 +34,7 @@ This exactly sums up my feelings about designing new languages.
 We need new programming languages. Why do we need them? Because statements taking the form **we don't need X** are, very often, wrong in hindsight. To give a few examples:
 
 * Before JSON was [discovered](http://inkdroid.org/journal/2012/04/30/lessons-of-json/), an easy thought for someone using XML would be that "we don't need more formats to represent structured data in plain text";
-* Before the iPhone launched (and keep in mind that was only five years ago), a whole industry had a very clear picture of what were and what were not the needs of their customers. Needless to say, they were pretty much wrong. Today's marketshare leader (Android) didn't even exist then;
+* Before the iPhone launched (and keep in mind that was only five years ago), a whole industry had a very clear picture of what were and what were not the needs of their customers. Needless to say, they were pretty much wrong. Today's marketshare leader (Android) <del>didn't even exist back then</del> hadn't even been released back then. ([Thanks omgitsjo](http://www.reddit.com/r/programming/comments/ton5l/why_i_am_creating_a_programming_language/c4omaq2))
 * Same goes for the iPad (*"we don't need another tablet"*);
 * [We don't need](http://www.extremetech.com/computing/79620-who-cares-about-googles-chrome-browser) [another browser](http://untyped.com/untyping/2008/09/02/googles-chrome-browser/).
 
